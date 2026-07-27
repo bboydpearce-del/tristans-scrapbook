@@ -1,0 +1,22 @@
+TRISTAN SCRAPBOOK — VERSION 1.5
+
+TO OPEN ON THIS LAPTOP
+1. Double-click: Start Tristan Scrapbook.bat
+2. A black window will open and the scrapbook should open automatically.
+3. Leave the black window open while using the scrapbook.
+
+TO OPEN ON A PHONE
+1. Connect the phone to the same home Wi-Fi as the laptop.
+2. Double-click Start Tristan Scrapbook.bat on the laptop.
+3. The black window will show one or more addresses in yellow.
+4. Type one of those addresses into the phone's web browser exactly as shown.
+
+For example:
+http://192.168.1.23:8000
+
+The first time, Windows may ask whether to allow access. Choose Allow for private networks.
+
+TO STOP
+Close the black server window, or press Ctrl+C in it.
+
+Version 1.5 preserves the v1.4 viewer and increases the size of the floating controls on phones.
