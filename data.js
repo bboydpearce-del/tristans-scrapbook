@@ -3,7 +3,7 @@ window.SCRAPBOOK_DATA = {
     {
       "name": "Welcome to Earth",
       "slug": "welcome-to-earth",
-      "count": 14,
+      "count": 15,
       "cover": "images/thumbs/01-001-got-my-first-ride.jpg",
       "items": [
         {
@@ -14,7 +14,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/01-002-happy-that-day.jpg",
           "thumb": "images/thumbs/01-002-happy-that-day.jpg",
-          "caption": "Happy that day"
+          "caption": "Primary school Tristan and Paul"
         },
         {
           "src": "images/full/01-003-he-s-so-cute.jpg",
@@ -39,7 +39,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/01-007-i-love-my-sisiter-but-that-tracksuit.jpg",
           "thumb": "images/thumbs/01-007-i-love-my-sisiter-but-that-tracksuit.jpg",
-          "caption": "I love my sisiter but that tracksuit..."
+          "caption": "I love my sister but that tracksuit..."
         },
         {
           "src": "images/full/01-008-i-thought-it-was-a-drum.jpg",
@@ -49,7 +49,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/01-009-is-that-some-sort-of-jellyfish-at-the-bottom-there.jpg",
           "thumb": "images/thumbs/01-009-is-that-some-sort-of-jellyfish-at-the-bottom-there.jpg",
-          "caption": "Is that some sort of jellyfish at the bottom there"
+          "caption": "Loving the cuddles"
         },
         {
           "src": "images/full/01-010-nope-i-hate-my-shower-cap-too.jpg",
@@ -59,7 +59,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/01-011-not-sure-about-this-shirt.jpg",
           "thumb": "images/thumbs/01-011-not-sure-about-this-shirt.jpg",
-          "caption": "Not sure about this shirt"
+          "caption": "Moving target when it comes to haircuts"
         },
         {
           "src": "images/full/01-012-rock-on.jpg",
@@ -75,19 +75,34 @@ window.SCRAPBOOK_DATA = {
           "src": "images/full/01-014-yes-i-know-i-m-wriggly.jpg",
           "thumb": "images/thumbs/01-014-yes-i-know-i-m-wriggly.jpg",
           "caption": "Yes I know I'm wriggly"
+        },
+        {
+          "src": "images/full/01-015-school-portrait.png",
+          "thumb": "images/thumbs/01-015-school-portrait.png",
+          "caption": "Growing up"
         }
       ]
     },
     {
       "name": "Well that would be me I guess",
       "slug": "well-that-would-be-me-i-guess",
-      "count": 17,
+      "count": 21,
       "cover": "images/thumbs/02-001-ah-an-alien-i-knew-there-was-something.jpg",
       "items": [
         {
+          "src": "images/full/07-000-dancer.png",
+          "thumb": "images/thumbs/07-000-dancer.png",
+          "caption": "Dancer"
+        },
+        {
+          "src": "images/full/06-001-cool-dude.png",
+          "thumb": "images/thumbs/06-001-cool-dude.png",
+          "caption": "Cool Dude"
+        },
+        {
           "src": "images/full/02-001-ah-an-alien-i-knew-there-was-something.jpg",
           "thumb": "images/thumbs/02-001-ah-an-alien-i-knew-there-was-something.jpg",
-          "caption": "Ah an alien, I knew there was something"
+          "caption": "We're all aliens"
         },
         {
           "src": "images/full/02-002-can-t-be-too-careful.jpg",
@@ -97,12 +112,17 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/02-003-fallen-leaf.jpg",
           "thumb": "images/thumbs/02-003-fallen-leaf.jpg",
-          "caption": "Fallen leaf"
+          "caption": "Fallen leaf written by by Sian"
+        },
+        {
+          "src": "images/full/07-002-what-a-balance.jpg",
+          "thumb": "images/thumbs/07-002-what-a-balance.jpg",
+          "caption": "What a balance!"
         },
         {
           "src": "images/full/02-004-good-to-see-you-all-of-you.jpg",
           "thumb": "images/thumbs/02-004-good-to-see-you-all-of-you.jpg",
-          "caption": "Good to see you all of you"
+          "caption": "Good to see you, all of you"
         },
         {
           "src": "images/full/02-005-he-s-so-sweet-for-now-anyway.jpg",
@@ -112,7 +132,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/02-006-i-see-my-time-machine-is-working.jpg",
           "thumb": "images/thumbs/02-006-i-see-my-time-machine-is-working.jpg",
-          "caption": "I see my time machine is working"
+          "caption": "Festival fun"
         },
         {
           "src": "images/full/02-007-i-m-off-to-get-some-what-was-it-again.jpg",
@@ -122,12 +142,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/02-008-now-am-i-lying-down-or-are-you.jpg",
           "thumb": "images/thumbs/02-008-now-am-i-lying-down-or-are-you.jpg",
-          "caption": "Now am I lying down or are you"
-        },
-        {
-          "src": "images/full/02-009-so-this-is-me-love-you-all-be-seeing-you.jpg",
-          "thumb": "images/thumbs/02-009-so-this-is-me-love-you-all-be-seeing-you.jpg",
-          "caption": "So this is me, love you all. Be seeing you"
+          "caption": "Listening to the beat"
         },
         {
           "src": "images/full/02-010-still-not-quite-sure-about-this-hat.jpg",
@@ -140,6 +155,11 @@ window.SCRAPBOOK_DATA = {
           "caption": "To be serious for a moment"
         },
         {
+          "src": "images/full/07-003-still-cool-dude.png",
+          "thumb": "images/thumbs/07-003-still-cool-dude.png",
+          "caption": "Still cool dude"
+        },
+        {
           "src": "images/full/02-012-tristan-and-paula.jpg",
           "thumb": "images/thumbs/02-012-tristan-and-paula.jpg",
           "caption": "Tristan and Paula"
@@ -147,7 +167,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/02-013-very-flattering-but-in-my-defence.jpg",
           "thumb": "images/thumbs/02-013-very-flattering-but-in-my-defence.jpg",
-          "caption": "Very flattering but in my defence..."
+          "caption": "Blissed out"
         },
         {
           "src": "images/full/02-014-what-the-hell-is-this-place-still-i-ve-got-a-can.jpg",
@@ -157,17 +177,22 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/02-015-white-face-yes-i-remember-it-not-at-all.jpg",
           "thumb": "images/thumbs/02-015-white-face-yes-i-remember-it-not-at-all.jpg",
-          "caption": "White face yes I remember it not at all"
+          "caption": "White face!"
         },
         {
           "src": "images/full/02-016-yeah-apc-what-is-apc-again.jpg",
           "thumb": "images/thumbs/02-016-yeah-apc-what-is-apc-again.jpg",
-          "caption": "Yeah APC what is APC again"
+          "caption": "Yeah APC, what is APC again"
         },
         {
           "src": "images/full/02-017-yup-these-wheels-are-fine.jpg",
           "thumb": "images/thumbs/02-017-yup-these-wheels-are-fine.jpg",
           "caption": "Yup these wheels are fine"
+        },
+        {
+          "src": "images/full/02-009-so-this-is-me-love-you-all-be-seeing-you.jpg",
+          "thumb": "images/thumbs/02-009-so-this-is-me-love-you-all-be-seeing-you.jpg",
+          "caption": "So this is me, love you all. Be seeing you"
         }
       ]
     },
@@ -180,7 +205,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/03-001-glitter-ball-really.jpg",
           "thumb": "images/thumbs/03-001-glitter-ball-really.jpg",
-          "caption": "Glitter ball really"
+          "caption": "Glitter ball!"
         },
         {
           "src": "images/full/03-002-nice-fence-don-t-you-think.jpg",
@@ -195,7 +220,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/03-004-see-how-small-i-am.jpg",
           "thumb": "images/thumbs/03-004-see-how-small-i-am.jpg",
-          "caption": "See how small I am"
+          "caption": "See how small I am and how huge the sofa is"
         },
         {
           "src": "images/full/03-005-they-ride-bikes-here.jpg",
@@ -228,17 +253,17 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/04-003-ginhgam-tablecloth.jpg",
           "thumb": "images/thumbs/04-003-ginhgam-tablecloth.jpg",
-          "caption": "Ginhgam tablecloth"
+          "caption": "Lunch gathering"
         },
         {
           "src": "images/full/04-004-happy-couples.jpg",
           "thumb": "images/thumbs/04-004-happy-couples.jpg",
-          "caption": "Happy couples"
+          "caption": "Friendship"
         },
         {
           "src": "images/full/04-005-happy-really-happy.jpg",
           "thumb": "images/thumbs/04-005-happy-really-happy.jpg",
-          "caption": "Happy really happy"
+          "caption": "Happy, really happy"
         },
         {
           "src": "images/full/04-006-hope-that-s-red-wine.jpg",
@@ -248,7 +273,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/04-007-is-that-actually-a-kilt.jpg",
           "thumb": "images/thumbs/04-007-is-that-actually-a-kilt.jpg",
-          "caption": "Is that actually a kilt"
+          "caption": "Sharing a meal"
         },
         {
           "src": "images/full/04-008-just-lke-i-showed-you.jpg",
@@ -268,7 +293,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/04-011-no-idea-what-s-going-on-here.jpg",
           "thumb": "images/thumbs/04-011-no-idea-what-s-going-on-here.jpg",
-          "caption": "No idea what's going on here"
+          "caption": "Peek a boo"
         },
         {
           "src": "images/full/04-012-rhi-at-pizza-hut.jpg",
@@ -283,24 +308,24 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/04-014-where-s-the-dog.jpg",
           "thumb": "images/thumbs/04-014-where-s-the-dog.jpg",
-          "caption": "Where's the dog"
+          "caption": "Good friends together"
         },
         {
           "src": "images/full/04-015-white-tent.jpg",
           "thumb": "images/thumbs/04-015-white-tent.jpg",
-          "caption": "White tent"
+          "caption": "Festival vibes"
         },
         {
           "src": "images/full/04-016-with-dog.jpg",
           "thumb": "images/thumbs/04-016-with-dog.jpg",
-          "caption": "With dog"
+          "caption": "And here's the doggie"
         }
       ]
     },
     {
       "name": "Between petrol cans and plain silly",
       "slug": "between-petrol-cans-and-plain-silly",
-      "count": 9,
+      "count": 10,
       "cover": "images/thumbs/05-001-anyone-got-a-light.jpg",
       "items": [
         {
@@ -311,7 +336,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/05-002-black-hat-barrel.jpg",
           "thumb": "images/thumbs/05-002-black-hat-barrel.jpg",
-          "caption": "Black hat barrel"
+          "caption": "Wine rack maybe?"
         },
         {
           "src": "images/full/05-003-drugs.jpg",
@@ -319,9 +344,14 @@ window.SCRAPBOOK_DATA = {
           "caption": "Drugs"
         },
         {
+          "src": "images/full/05-004-smiley.png",
+          "thumb": "images/thumbs/05-004-smiley.png",
+          "caption": "Smiley"
+        },
+        {
           "src": "images/full/05-004-gas-m-standing.jpg",
           "thumb": "images/thumbs/05-004-gas-m-standing.jpg",
-          "caption": "Gas m standing"
+          "caption": "Ready for anything"
         },
         {
           "src": "images/full/05-005-he-ll-be-fine-probably.jpg",
@@ -336,7 +366,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/05-007-nice-curtains.jpg",
           "thumb": "images/thumbs/05-007-nice-curtains.jpg",
-          "caption": "Nice curtains"
+          "caption": "Tristan with a bevy of beauties"
         },
         {
           "src": "images/full/05-008-nice-uhhh-umbrellas.jpg",
@@ -359,12 +389,12 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/06-001-check-out-my-shiny-tie.jpg",
           "thumb": "images/thumbs/06-001-check-out-my-shiny-tie.jpg",
-          "caption": "Check out my shiny tie"
+          "caption": "Happy couple"
         },
         {
           "src": "images/full/06-002-fishnets-and-refelective-bans-wow.jpg",
           "thumb": "images/thumbs/06-002-fishnets-and-refelective-bans-wow.jpg",
-          "caption": "Fishnets and refelective bans.Wow"
+          "caption": "Fishnets and refelective bans, gorgeous"
         },
         {
           "src": "images/full/06-003-i-think-he-looks-very-cool.jpg",
@@ -374,7 +404,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/06-004-i-think-she-loves-him.jpg",
           "thumb": "images/thumbs/06-004-i-think-she-loves-him.jpg",
-          "caption": "I think she loves him"
+          "caption": "It's love"
         },
         {
           "src": "images/full/06-005-love-weddings.jpg",
@@ -402,12 +432,12 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/07-002-van.jpg",
           "thumb": "images/thumbs/07-002-van.jpg",
-          "caption": "Van"
+          "caption": "On our way"
         }
       ]
     },
     {
-      "name": "Where did everyone go",
+      "name": "Just You and Me",
       "slug": "where-did-everyone-go",
       "count": 15,
       "cover": "images/thumbs/08-001-always-good-to-be-near-the-fire-exit.jpg",
@@ -420,32 +450,32 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/08-002-are-those-stars.jpg",
           "thumb": "images/thumbs/08-002-are-those-stars.jpg",
-          "caption": "Are those stars"
+          "caption": "Close friends"
         },
         {
           "src": "images/full/08-003-green-goggles-why-not.jpg",
           "thumb": "images/thumbs/08-003-green-goggles-why-not.jpg",
-          "caption": "Green goggles why not"
+          "caption": "Green goggles why not!"
         },
         {
           "src": "images/full/08-004-happy-maybe-what-do-you-think.jpg",
           "thumb": "images/thumbs/08-004-happy-maybe-what-do-you-think.jpg",
-          "caption": "Happy maybe, what do you think"
+          "caption": "Big smiles!"
         },
         {
           "src": "images/full/08-005-hope-that-s-red-wine.jpg",
           "thumb": "images/thumbs/08-005-hope-that-s-red-wine.jpg",
-          "caption": "Hope that's red wine"
+          "caption": "Still hope that's red wine"
         },
         {
           "src": "images/full/08-006-i-know-what-i-m-looking-at-what-are-you-looking-at.jpg",
           "thumb": "images/thumbs/08-006-i-know-what-i-m-looking-at-what-are-you-looking-at.jpg",
-          "caption": "I know what I'm looking at, what are you looking at"
+          "caption": "Vintage vibes"
         },
         {
           "src": "images/full/08-007-i-ve-got-denims-what-have-you-got.jpg",
           "thumb": "images/thumbs/08-007-i-ve-got-denims-what-have-you-got.jpg",
-          "caption": "I've got denims, what have you got"
+          "caption": "Holding close"
         },
         {
           "src": "images/full/08-008-is-a-gas-mask-better-than-goggles.jpg",
@@ -455,12 +485,12 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/08-009-is-this-a-speaker-or-a-bin-with-holes.jpg",
           "thumb": "images/thumbs/08-009-is-this-a-speaker-or-a-bin-with-holes.jpg",
-          "caption": "Is this a speaker or a bin with holes"
+          "caption": "Maybe a speaker or a bin with holes"
         },
         {
           "src": "images/full/08-010-it-s-not-a-bat-promise.jpg",
           "thumb": "images/thumbs/08-010-it-s-not-a-bat-promise.jpg",
-          "caption": "It's not a bat promise"
+          "caption": "What's with the stick"
         },
         {
           "src": "images/full/08-011-just-lke-i-showed-you.jpg",
@@ -470,22 +500,22 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/08-012-perhaps-a-blittle-bit-spooky.jpg",
           "thumb": "images/thumbs/08-012-perhaps-a-blittle-bit-spooky.jpg",
-          "caption": "Perhaps a blittle bit spooky"
+          "caption": "Sharing a moment"
         },
         {
           "src": "images/full/08-013-the-plane-has-left-the-runway.jpg",
           "thumb": "images/thumbs/08-013-the-plane-has-left-the-runway.jpg",
-          "caption": "The plane has left the runway"
+          "caption": "Another fab night out"
         },
         {
           "src": "images/full/08-014-where-are-we-exactly.jpg",
           "thumb": "images/thumbs/08-014-where-are-we-exactly.jpg",
-          "caption": "Where are we exactly"
+          "caption": "Together"
         },
         {
           "src": "images/full/08-015-where-s-the-tent-gone.jpg",
           "thumb": "images/thumbs/08-015-where-s-the-tent-gone.jpg",
-          "caption": "Where's the tent gone"
+          "caption": "Festival vibes"
         }
       ]
     }

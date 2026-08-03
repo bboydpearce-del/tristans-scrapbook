@@ -5,12 +5,24 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f3eee5">
 <title>Tristan — Remember me</title>
-<meta name="application-name" content="Tristan Scrapbook v1.5">
-<link rel="stylesheet" href="style.css">
+<meta name="application-name" content="Tristan Scrapbook v2.51">
+<link rel="stylesheet" href="style.css?v=256-delayed-smaller-pages">
+<style>
+/* Final authority: every exposed album surface is neutral charcoal. */
+.album-page,.base-page-left,.base-page-right,.sheet-side,.sheet-face,.cover-inside{
+ background:linear-gradient(105deg,#17181b 0%,#24262a 48%,#1b1c20 100%)!important;
+ color:#d7d4cc!important;
+}
+.album-page-left,.base-page-left{background:linear-gradient(96deg,#18191c 0%,#23252a 72%,#151619 100%)!important}
+.sheet-side-back{background:linear-gradient(96deg,#18191c 0%,#23252a 72%,#151619 100%)!important}
+.back-cover{background:linear-gradient(110deg,#111216,#24262a 55%,#151619)!important}
+.album-title-page,.album-title-page h2,.album-title-page p{color:#d2d0ca!important}
+.mounted-photo{pointer-events:auto!important}
+</style>
 </head>
 <body>
 <main id="app" aria-live="polite"></main>
 <script src="data.js"></script>
-<script src="script.js"></script>
+<script src="script.js?v=257-single-album-lock"></script>
 </body>
 </html>
