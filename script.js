@@ -439,7 +439,12 @@ function openPhoto(itemIndex,mounted){
     {offset:.55,filter:'sepia(.15) saturate(.92) contrast(.99) brightness(1.01)'},
     {filter:'none'}
    ],{duration:620,easing:'ease-out',fill:'forwards'});
-   move.onfinish=()=>caption.classList.add('shown');
+   move.onfinish=()=>{
+ caption.style.left='50%';
+ caption.style.top=(target.top+target.height+12)+'px';
+ caption.style.bottom='auto';
+ caption.classList.add('shown');
+};
    mounted._photoState={overlay,flight,cloneImg,backdrop,caption,dismiss,move,colour,target};
   };
 
