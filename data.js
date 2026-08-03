@@ -3,7 +3,7 @@ window.SCRAPBOOK_DATA = {
     {
       "name": "Welcome to Earth",
       "slug": "welcome-to-earth",
-      "count": 14,
+      "count": 15,
       "cover": "images/thumbs/01-001-got-my-first-ride.jpg",
       "items": [
         {
@@ -75,15 +75,30 @@ window.SCRAPBOOK_DATA = {
           "src": "images/full/01-014-yes-i-know-i-m-wriggly.jpg",
           "thumb": "images/thumbs/01-014-yes-i-know-i-m-wriggly.jpg",
           "caption": "Yes I know I'm wriggly"
+        },
+        {
+          "src": "images/full/01-015-school-portrait.png",
+          "thumb": "images/thumbs/01-015-school-portrait.png",
+          "caption": "Growing up"
         }
       ]
     },
     {
       "name": "Well that would be me I guess",
       "slug": "well-that-would-be-me-i-guess",
-      "count": 17,
+      "count": 21,
       "cover": "images/thumbs/02-001-ah-an-alien-i-knew-there-was-something.jpg",
       "items": [
+        {
+          "src": "images/full/07-000-dancer.png",
+          "thumb": "images/thumbs/07-000-dancer.png",
+          "caption": "Dancer"
+        },
+        {
+          "src": "images/full/06-001-cool-dude.png",
+          "thumb": "images/thumbs/06-001-cool-dude.png",
+          "caption": "Cool Dude"
+        },
         {
           "src": "images/full/02-001-ah-an-alien-i-knew-there-was-something.jpg",
           "thumb": "images/thumbs/02-001-ah-an-alien-i-knew-there-was-something.jpg",
@@ -98,6 +113,11 @@ window.SCRAPBOOK_DATA = {
           "src": "images/full/02-003-fallen-leaf.jpg",
           "thumb": "images/thumbs/02-003-fallen-leaf.jpg",
           "caption": "Fallen leaf written by by Sian"
+        },
+        {
+          "src": "images/full/07-002-what-a-balance.jpg",
+          "thumb": "images/thumbs/07-002-what-a-balance.jpg",
+          "caption": "What a balance!"
         },
         {
           "src": "images/full/02-004-good-to-see-you-all-of-you.jpg",
@@ -125,11 +145,6 @@ window.SCRAPBOOK_DATA = {
           "caption": "Listening to the beat"
         },
         {
-          "src": "images/full/02-009-so-this-is-me-love-you-all-be-seeing-you.jpg",
-          "thumb": "images/thumbs/02-009-so-this-is-me-love-you-all-be-seeing-you.jpg",
-          "caption": "So this is me, love you all. Be seeing you"
-        },
-        {
           "src": "images/full/02-010-still-not-quite-sure-about-this-hat.jpg",
           "thumb": "images/thumbs/02-010-still-not-quite-sure-about-this-hat.jpg",
           "caption": "Still not quite sure about this hat"
@@ -138,6 +153,11 @@ window.SCRAPBOOK_DATA = {
           "src": "images/full/02-011-to-be-serious-for-a-moment.jpg",
           "thumb": "images/thumbs/02-011-to-be-serious-for-a-moment.jpg",
           "caption": "To be serious for a moment"
+        },
+        {
+          "src": "images/full/07-003-still-cool-dude.png",
+          "thumb": "images/thumbs/07-003-still-cool-dude.png",
+          "caption": "Still cool dude"
         },
         {
           "src": "images/full/02-012-tristan-and-paula.jpg",
@@ -168,6 +188,11 @@ window.SCRAPBOOK_DATA = {
           "src": "images/full/02-017-yup-these-wheels-are-fine.jpg",
           "thumb": "images/thumbs/02-017-yup-these-wheels-are-fine.jpg",
           "caption": "Yup these wheels are fine"
+        },
+        {
+          "src": "images/full/02-009-so-this-is-me-love-you-all-be-seeing-you.jpg",
+          "thumb": "images/thumbs/02-009-so-this-is-me-love-you-all-be-seeing-you.jpg",
+          "caption": "So this is me, love you all. Be seeing you"
         }
       ]
     },
@@ -210,7 +235,7 @@ window.SCRAPBOOK_DATA = {
       ]
     },
     {
-      "name": "Some of my friends, just some",
+      "name": "Some of my friends just some",
       "slug": "some-of-my-friends-just-some",
       "count": 16,
       "cover": "images/thumbs/04-001-ah-yes-that-party.jpg",
@@ -300,7 +325,7 @@ window.SCRAPBOOK_DATA = {
     {
       "name": "Between petrol cans and plain silly",
       "slug": "between-petrol-cans-and-plain-silly",
-      "count": 9,
+      "count": 10,
       "cover": "images/thumbs/05-001-anyone-got-a-light.jpg",
       "items": [
         {
@@ -317,6 +342,11 @@ window.SCRAPBOOK_DATA = {
           "src": "images/full/05-003-drugs.jpg",
           "thumb": "images/thumbs/05-003-drugs.jpg",
           "caption": "Drugs"
+        },
+        {
+          "src": "images/full/05-004-smiley.png",
+          "thumb": "images/thumbs/05-004-smiley.png",
+          "caption": "Smiley"
         },
         {
           "src": "images/full/05-004-gas-m-standing.jpg",
@@ -351,7 +381,7 @@ window.SCRAPBOOK_DATA = {
       ]
     },
     {
-      "name": "Me at a wedding, seriously",
+      "name": "Me at a wedding seriously",
       "slug": "me-at-a-wedding-seriously",
       "count": 6,
       "cover": "images/thumbs/06-001-check-out-my-shiny-tie.jpg",
@@ -407,7 +437,7 @@ window.SCRAPBOOK_DATA = {
       ]
     },
     {
-      "name": "Just you and me",
+      "name": "Just You and Me",
       "slug": "where-did-everyone-go",
       "count": 15,
       "cover": "images/thumbs/08-001-always-good-to-be-near-the-fire-exit.jpg",

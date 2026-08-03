@@ -3,7 +3,6 @@ const data=window.SCRAPBOOK_DATA;
 if(!app) throw new Error('Gallery could not find the #app element.');
 if(!data || !Array.isArray(data.categories)) throw new Error('Gallery data did not load.');
 let currentCategory=0,currentIndex=0,isViewing=false,activeMountedPhoto=null;
-let albumInteractionLocked=false;
 
 const BOOKS=[
  {l:2.5,t:17.2,w:22.1,h:37.2,r:-1.5},
@@ -16,25 +15,9 @@ const BOOKS=[
  {l:73.3,t:55.0,w:25.5,h:39.3,r:.5}
 ];
 
-// Geometry of the visible album inside each transparent cover PNG.  The cover
-// photographs are not identical rectangles: each was cut from the desk at a
-// slightly different angle and aspect ratio.  The reader must use that same
-// physical geometry rather than forcing every album into one universal shape.
-const COVER_GEOMETRY=[
- {ratio:347.467/318.213,angle:-5.711,sx:361/318.213,sy:381/347.467},
- {ratio:332.758/310.371,angle:-6.511,sx:357/310.371,sy:360/332.758},
- {ratio:347.704/308.741,angle:-9.462,sx:373/308.741,sy:352/347.704},
- {ratio:335.135/364.879,angle:-5.641,sx:408/364.879,sy:345/335.135},
- {ratio:393.370/387.636,angle:-6.143,sx:427/387.636,sy:439/393.370},
- {ratio:394.554/330.801,angle:-7.125,sx:386/330.801,sy:431/394.554},
- {ratio:381.725/344.135,angle:-5.932,sx:391/344.135,sy:417/381.725},
- {ratio:381.263/358.219,angle:-8.471,sx:415/358.219,sy:387/381.263}
-];
-
 function showCover(){showDesk()}
 
 function showDesk(){
- albumInteractionLocked=false;
  closePhoto(false);
  document.title="Tristan's Gallery";
  const books=data.categories.map((c,i)=>`<button class="desk-book desk-book-${i+1}" data-book="${i}" aria-label="Open ${esc(c.name)}"><span>${esc(c.name)}</span></button>`).join('');
@@ -55,64 +38,17 @@ function showDesk(){
 }
 
 function openAlbum(i,button){
- // Acquire one global lock before doing any layout or animation work. Without
- // this, two rapid clicks on different desk books can create two independent
- // flyers, which then stack over one another and leave the reader frozen.
- if(albumInteractionLocked) return;
- albumInteractionLocked=true;
- app.querySelectorAll('.desk-book').forEach(bookButton=>{
-  bookButton.disabled=true;
-  bookButton.setAttribute('aria-disabled','true');
- });
  currentCategory=i; currentIndex=0;
- // Use the hotspot's unrotated box within the desk, not its transformed
- // axis-aligned bounding rectangle.  The album PNG already contains the book
- // at its photographed desk angle; measuring the rotated hotspot and then
- // rotating the flyer again caused the visible snap at pickup.
- const frame=button.closest('.desk-frame');
- const fr=frame.getBoundingClientRect();
- const geometry=BOOKS[i];
- const br={
-  left:fr.left+(fr.width*geometry.l/100),
-  top:fr.top+(fr.height*geometry.t/100),
-  width:fr.width*geometry.w/100,
-  height:fr.height*geometry.h/100
- };
- // The two remaining cut-outs (albums 4 and 7) are lifted inside a
- // transparent padded shell.  The visible image keeps exactly the same desk
- // geometry, but the browser receives extra raster space around it so the
- // rotated lower edge cannot be clipped by the compositing boundary.
- const paddedFlyer=(i===3 || i===6);
- const flyer=document.createElement(paddedFlyer?'div':'img');
- flyer.className='album-flyer album-flyer-smooth'+(paddedFlyer?' album-flyer-padded':'');
- let flyerImage=null;
- const flyerPad=paddedFlyer?18:0;
- if(paddedFlyer){
-  flyerImage=document.createElement('img');
-  flyerImage.className='album-flyer-padded-image';
-  flyerImage.src=`images/ui/albums/album-${i+1}.png`;
-  flyerImage.alt='';
-  flyer.appendChild(flyerImage);
- }else{
-  flyer.src=`images/ui/albums/album-${i+1}.png`;
-  flyer.alt='';
- }
- // The desk album is baked into the desk photograph, whereas the moving
- // album is a separately cut image. Their painted edges are not pixel-identical,
- // so an instantaneous opaque substitution always produces a visible snap.
- // Begin the cut-out transparent and blend it in over the first part of the lift.
- flyer.style.left=`${br.left-flyerPad}px`;
- flyer.style.top=`${br.top-flyerPad}px`;
- flyer.style.opacity='0';
- flyer.style.width=`${br.width+flyerPad*2}px`;
- flyer.style.height=`${br.height+flyerPad*2}px`;
- flyer.style.transformOrigin=paddedFlyer?`${flyerPad}px ${flyerPad}px`:'top left';
- if(flyerImage){
-  flyerImage.style.left=`${flyerPad}px`;
-  flyerImage.style.top=`${flyerPad}px`;
-  flyerImage.style.width=`${br.width}px`;
-  flyerImage.style.height=`${br.height}px`;
- }
+ const br=button.getBoundingClientRect();
+ const flyer=document.createElement('img');
+ flyer.className='album-flyer album-flyer-smooth';
+ flyer.src=`images/ui/albums/album-${i+1}.png`;
+ flyer.alt='';
+ flyer.style.left=`${br.left}px`;
+ flyer.style.top=`${br.top}px`;
+ flyer.style.width=`${br.width}px`;
+ flyer.style.height=`${br.height}px`;
+ flyer.style.transformOrigin='top left';
  document.body.appendChild(flyer);
  button.style.visibility='hidden';
  app.querySelector('.desk-screen')?.classList.add('desk-receding');
@@ -127,11 +63,10 @@ function openAlbum(i,button){
  const scale=targetW/br.width;
 
  const lift=flyer.animate([
-  {transform:'translate3d(0,0,0) scale(1) rotate(0deg)',filter:'drop-shadow(0 8px 8px rgba(0,0,0,.18))',opacity:0},
-  {offset:.08,transform:`translate3d(${dx*.012}px,${dy*.012}px,0) scale(${1+(scale-1)*.008}) rotate(-.04deg)`,filter:'drop-shadow(0 9px 9px rgba(0,0,0,.20))',opacity:.45},
-  {offset:.18,transform:`translate3d(${dx*.055}px,${dy*.055}px,0) scale(${1+(scale-1)*.045}) rotate(-.15deg)`,filter:'drop-shadow(0 11px 10px rgba(0,0,0,.25))',opacity:1},
-  {offset:.72,transform:`translate3d(${dx*.79}px,${dy*.79}px,0) scale(${1+(scale-1)*.79}) rotate(-1.7deg)`,filter:'drop-shadow(0 28px 25px rgba(0,0,0,.50))',opacity:1},
-  {transform:`translate3d(${dx}px,${dy}px,0) scale(${scale}) rotate(-1.5deg)`,filter:'drop-shadow(0 34px 30px rgba(0,0,0,.58))',opacity:1}
+  {transform:`translate3d(0,0,0) scale(1) rotate(${BOOKS[i].r}deg)`,filter:'drop-shadow(0 8px 8px rgba(0,0,0,.18))'},
+  {offset:.18,transform:`translate3d(${dx*.055}px,${dy*.055}px,0) scale(${1+(scale-1)*.045}) rotate(${BOOKS[i].r*.88}deg)`,filter:'drop-shadow(0 11px 10px rgba(0,0,0,.25))'},
+  {offset:.72,transform:`translate3d(${dx*.79}px,${dy*.79}px,0) scale(${1+(scale-1)*.79}) rotate(-1.7deg)`,filter:'drop-shadow(0 28px 25px rgba(0,0,0,.50))'},
+  {transform:`translate3d(${dx}px,${dy}px,0) scale(${scale}) rotate(-1.5deg)`,filter:'drop-shadow(0 34px 30px rgba(0,0,0,.58))'}
  ],{
   duration:1500,
   easing:'cubic-bezier(.42,0,.18,1)',
@@ -165,19 +100,15 @@ function openAlbum(i,button){
    ],{duration:140,easing:'linear',fill:'forwards'});
    commit.finished.then(()=>{
     flyer.remove();
-    requestAnimationFrame(()=>requestAnimationFrame(()=>book?.beginOpening?.()));
+    requestAnimationFrame(()=>requestAnimationFrame(()=>book?.classList.add('is-open')));
    }).catch(()=>{
     flyer.remove();
-    book?.beginOpening?.();
+    book?.classList.add('is-open');
    });
   };
   flyer.addEventListener('click',open,{once:true});
   flyer.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}});
- }).catch(()=>{
-  flyer.remove();
-  albumInteractionLocked=false;
-  showDesk();
- });
+ }).catch(()=>flyer.remove());
 }
 
 function photoPage(itemIndex, side){
@@ -186,10 +117,12 @@ function photoPage(itemIndex, side){
   return `<div class="page-inner page-inner-${side}"><div class="album-title-page"><span class="title-rule"></span><p>${itemIndex<0?'Photographs of Tristan':'End of album'}</p></div></div>`;
  }
  const p=c.items[itemIndex];
- return `<div class="page-inner page-inner-photo">
+ return `<div class="page-inner">
   <button class="mounted-photo" data-item="${itemIndex}" type="button" aria-label="View ${esc(p.caption)} in full colour">
    <img src="${p.src}" alt="${esc(p.caption)}" draggable="false">
   </button>
+  <p class="photo-caption">${esc(p.caption)}</p>
+  <p class="page-number">${itemIndex+1} / ${c.items.length}</p>
  </div>`;
 }
 
@@ -216,14 +149,15 @@ function renderAlbum(i,opening=false){
  document.title=`${c.name} — Tristan's Gallery`;
  app.innerHTML=`<section class="reader-screen">
   <div class="reader-desk" aria-hidden="true"><img src="images/ui/album-desk.png" alt=""></div>
-  <button class="reader-close" type="button" aria-label="Return to albums">Albums</button>
+  <button class="reader-close" type="button" aria-label="Close album">×</button>
   <div class="album-stage">
-   <div class="open-album" style="--book-ratio:${COVER_GEOMETRY[i].ratio.toFixed(4)};--cover-correction:${(-COVER_GEOMETRY[i].angle).toFixed(3)}deg;--cover-scale-x:${COVER_GEOMETRY[i].sx.toFixed(4)};--cover-scale-y:${COVER_GEOMETRY[i].sy.toFixed(4)}" aria-label="Open ${esc(c.name)} photograph album">
+   <div class="open-album" aria-label="Open ${esc(c.name)} photograph album">
     <div class="book-shadow" aria-hidden="true"></div>
     <div class="back-cover back-cover-left" aria-hidden="true"></div>
     <div class="back-cover back-cover-right" aria-hidden="true"></div>
-    <div class="left-page-anchor" aria-hidden="true"></div>
+    <div class="page-stack page-stack-left" aria-hidden="true"></div>
     <div class="page-stack page-stack-right" aria-hidden="true"></div>
+    <article class="album-page album-page-left base-page-left"><div class="page-inner page-inner-left" aria-label="Blank inside cover"></div></article>
     <article class="album-page album-page-right base-page-right">${photoPage(c.items.length,'right')}</article>
     <div class="sheet-stack">${makeSheets(c)}</div>
     <button class="photo-hit-area" type="button" aria-label="View current photograph in full colour"></button>
@@ -231,8 +165,9 @@ function renderAlbum(i,opening=false){
     <div class="front-cover" aria-hidden="true"><img src="images/ui/albums/album-${i+1}.png" alt="" draggable="false"><div class="cover-inside"></div></div>
    </div>
   </div>
-  <button class="page-arrow page-prev" type="button" aria-label="Previous sheet" ${currentIndex===0?'disabled':''}><span aria-hidden="true"><img src="images/ui/page-turn-motif.png" alt=""></span></button>
-  <button class="page-arrow page-next" type="button" aria-label="Next sheet" ${currentIndex>=sheetCount?'disabled':''}><span aria-hidden="true"><img src="images/ui/page-turn-motif.png" alt=""></span></button>
+  <button class="page-arrow page-prev" type="button" aria-label="Previous sheet" ${currentIndex===0?'disabled':''}>‹</button>
+  <button class="page-arrow page-next" type="button" aria-label="Next sheet" ${currentIndex>=sheetCount?'disabled':''}>›</button>
+  <div class="reader-title">${esc(c.name)}</div>
  </section>`;
  app.querySelector('.reader-close').addEventListener('click',showDesk);
  bindMountedPhotos();
@@ -240,28 +175,8 @@ function renderAlbum(i,opening=false){
  app.querySelector('.page-next').addEventListener('click',()=>turnPage(1));
  updatePhotoHitArea();
  const book=app.querySelector('.open-album');
-
- // The blank left page is intentionally not present in the DOM while the
- // album is closed.  It is created only after the front cover has actually
- // begun to move, preventing any single-frame glimpse during the handoff.
- const addLeftPage=()=>{
-  if(!book || book.querySelector('.base-page-left')) return;
-  const anchor=book.querySelector('.left-page-anchor');
-  if(!anchor) return;
-  anchor.insertAdjacentHTML('afterend',
-   `<div class="page-stack page-stack-left" aria-hidden="true"></div>
-    <article class="album-page album-page-left base-page-left"><div class="page-inner page-inner-left" aria-label="Blank inside cover"></div></article>`
-  );
- };
- const beginOpening=()=>{
-  if(!book) return;
-  book.classList.add('is-open');
-  setTimeout(addLeftPage,220);
- };
-
- if(opening===true){setTimeout(beginOpening,260)}
- else if(opening==='handoff'){book.beginOpening=beginOpening}
- else {addLeftPage(); book?.classList.add('is-open')}
+ if(opening===true){setTimeout(()=>book?.classList.add('is-open'),260)}
+ else if(opening!=='handoff') book?.classList.add('is-open');
  addSwipe(book);
  return book;
 }
@@ -354,7 +269,7 @@ function turnPage(dir){
   book.classList.remove('is-turning');
  };
  sheet.addEventListener('transitionend',finish);
- setTimeout(finish,700);
+ setTimeout(finish,1100);
 }
 
 function elementPositionWithin(el, ancestor){
