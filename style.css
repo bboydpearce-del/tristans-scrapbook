@@ -733,3 +733,17 @@ html,body{width:100%;height:100%;overflow:hidden}
     max-height:32px!important;
   }
 }
+
+/* v2.67 — suppress the browser's blue tap highlight on touch devices. */
+html,
+body,
+button,
+a,
+[role="button"],
+.book,
+.page-arrow,
+.reader-close,
+.mounted-photo,
+.colour-photo {
+  -webkit-tap-highlight-color: transparent;
+}
