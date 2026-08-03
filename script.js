@@ -370,76 +370,81 @@ function elementPositionWithin(el, ancestor){
 function openPhoto(itemIndex,mounted){
  if(isViewing)return;
  const sourceImg=mounted&&mounted.querySelector('img');
- const book=app.querySelector('.open-album');
- if(!sourceImg||!book)return;
+ if(!sourceImg)return;
  const begin=()=>{
   const p=data.categories[currentCategory].items[itemIndex];
-  const pos=elementPositionWithin(mounted,book);
-  const w=mounted.offsetWidth;
-  const h=mounted.offsetHeight;
-  if(!w||!h)return;
-
-  // The clone is a direct child of the transformed book. It therefore stays
-  // parallel to the book page, but its high Z position places it above both
-  // pages and the spine instead of inside the right page's clipping context.
-  const flight=document.createElement('button');
-  flight.type='button';
-  flight.className='book-plane-photo-flight';
-  flight.setAttribute('aria-label','Return photograph to album');
-  flight.style.left=`${pos.x}px`;
-  flight.style.top=`${pos.y}px`;
-  flight.style.width=`${w}px`;
-  flight.style.height=`${h}px`;
-  const cloneImg=sourceImg.cloneNode(true);
-  cloneImg.removeAttribute('id');
-  flight.appendChild(cloneImg);
-  book.appendChild(flight);
-
-  const bookW=book.clientWidth, bookH=book.clientHeight;
-  const maxW=bookW*.78, maxH=bookH*.78;
-  const scale=Math.max(1.15,Math.min(maxW/w,maxH/h,3.0));
-  const startCx=pos.x+w/2, startCy=pos.y+h/2;
-  const targetCx=bookW/2, targetCy=bookH/2;
-  const dx=targetCx-startCx, dy=targetCy-startCy;
+  const sourceRect=sourceImg.getBoundingClientRect();
+  if(!sourceRect.width||!sourceRect.height)return;
 
   isViewing=true;
   activeMountedPhoto=mounted;
   mounted.style.visibility='hidden';
 
-  const reader=app.querySelector('.reader-screen')||app;
-  const backdrop=document.createElement('div');
-  backdrop.className='page-photo-backdrop';
-  reader.insertBefore(backdrop,reader.firstChild);
-  const caption=document.createElement('p');
-  caption.className='page-photo-caption';
-  caption.textContent=p.caption;
-  reader.appendChild(caption);
-  const close=document.createElement('button');
-  close.className='colour-close page-photo-close';
-  close.setAttribute('aria-label','Return photograph to album');
-  close.textContent='×';
-  reader.appendChild(close);
+  // The full-colour photograph now lives in an independent viewport layer.
+  // It is not a child of the transformed album, so the browser can render the
+  // source image at full resolution without inheriting book perspective.
+  const overlay=document.createElement('div');
+  overlay.className='viewport-photo-overlay';
 
-  const fromTransform='translate3d(0,0,0px) scale(1)';
-  const toTransform=`translate3d(${dx}px,${dy}px,180px) scale(${scale})`;
-  const move=flight.animate([
-   {transform:fromTransform},
-   {transform:toTransform}
-  ],{duration:860,easing:'cubic-bezier(.33,.02,.18,1)',fill:'forwards'});
-  const colour=cloneImg.animate([
-   {filter:'sepia(.78) saturate(.62) contrast(.92) brightness(1.04)'},
-   {offset:.7,filter:'sepia(.18) saturate(.9) contrast(.98) brightness(1.02)'},
-   {filter:'none'}
-  ],{duration:860,easing:'cubic-bezier(.33,.02,.18,1)',fill:'forwards'});
-  move.onfinish=()=>caption.classList.add('shown');
+  const backdrop=document.createElement('button');
+  backdrop.type='button';
+  backdrop.className='viewport-photo-backdrop';
+  backdrop.setAttribute('aria-label','Return photograph to album');
+
+  const flight=document.createElement('button');
+  flight.type='button';
+  flight.className='viewport-photo-flight';
+  flight.setAttribute('aria-label','Return photograph to album');
+  Object.assign(flight.style,{
+   left:`${sourceRect.left}px`,top:`${sourceRect.top}px`,
+   width:`${sourceRect.width}px`,height:`${sourceRect.height}px`
+  });
+
+  const cloneImg=document.createElement('img');
+  cloneImg.src=p.src;
+  cloneImg.alt=p.caption||'';
+  flight.appendChild(cloneImg);
+
+  const caption=document.createElement('p');
+  caption.className='viewport-photo-caption';
+  caption.textContent=p.caption;
+
+  overlay.append(backdrop,flight,caption);
+  document.body.appendChild(overlay);
 
   const dismiss=e=>{e.preventDefault();e.stopPropagation();closePhoto(true)};
   flight.addEventListener('click',dismiss);
   backdrop.addEventListener('click',dismiss);
-  close.addEventListener('click',dismiss);
   document.addEventListener('keydown',photoKey);
 
-  mounted._photoState={flight,cloneImg,dx,dy,scale,backdrop,caption,close,move,colour,dismiss,fromTransform,toTransform};
+  const placeTarget=()=>{
+   const vw=window.innerWidth, vh=window.innerHeight;
+   const naturalW=cloneImg.naturalWidth||sourceRect.width;
+   const naturalH=cloneImg.naturalHeight||sourceRect.height;
+   const ratio=naturalW/naturalH;
+   const maxW=vw*.94;
+   const maxH=vh*.82;
+   let targetW=maxW, targetH=targetW/ratio;
+   if(targetH>maxH){targetH=maxH;targetW=targetH*ratio;}
+   const targetLeft=(vw-targetW)/2;
+   const targetTop=Math.max(10,(vh-targetH)/2-12);
+   const target={left:targetLeft,top:targetTop,width:targetW,height:targetH};
+
+   const move=flight.animate([
+    {left:`${sourceRect.left}px`,top:`${sourceRect.top}px`,width:`${sourceRect.width}px`,height:`${sourceRect.height}px`},
+    {left:`${target.left}px`,top:`${target.top}px`,width:`${target.width}px`,height:`${target.height}px`}
+   ],{duration:620,easing:'cubic-bezier(.2,.72,.2,1)',fill:'forwards'});
+   const colour=cloneImg.animate([
+    {filter:'sepia(.78) saturate(.62) contrast(.92) brightness(1.04)'},
+    {offset:.55,filter:'sepia(.15) saturate(.92) contrast(.99) brightness(1.01)'},
+    {filter:'none'}
+   ],{duration:620,easing:'ease-out',fill:'forwards'});
+   move.onfinish=()=>caption.classList.add('shown');
+   mounted._photoState={overlay,flight,cloneImg,backdrop,caption,dismiss,move,colour,target};
+  };
+
+  if(cloneImg.complete&&cloneImg.naturalWidth)placeTarget();
+  else cloneImg.addEventListener('load',placeTarget,{once:true});
  };
  if(sourceImg.complete&&sourceImg.naturalWidth)begin();
  else sourceImg.addEventListener('load',begin,{once:true});
@@ -451,40 +456,28 @@ function closePhoto(animate=true){
  document.removeEventListener('keydown',photoKey);
  const st=mounted._photoState;
  const finish=()=>{
-  // Complete the photograph handoff first. Keep the dark desk overlay in place
-  // during this frame so its disappearance cannot masquerade as photo movement.
   mounted.style.visibility='';
-  st?.flight?.remove();
-  st?.caption?.remove(); st?.close?.remove();
-
-  const backdrop=st?.backdrop;
-  if(backdrop){
-   const fade=backdrop.animate(
-    [{opacity:1},{opacity:1,offset:.28},{opacity:0}],
-    {duration:320,easing:'ease-out',fill:'forwards'}
-   );
-   fade.onfinish=()=>backdrop.remove();
-  }
-
+  st?.overlay?.remove();
   delete mounted._photoState;
-  isViewing=false; activeMountedPhoto=null;
+  isViewing=false;activeMountedPhoto=null;
  };
  if(!animate||!st){finish();return}
  st.caption?.classList.remove('shown');
- st.move?.cancel(); st.colour?.cancel();
- // Return to the photograph's exact original transform. The previously added
- // rotational compensation was treating an overlay handoff as a rotation.
+ st.move?.cancel();st.colour?.cancel();
+ const sourceImg=mounted.querySelector('img');
+ const r=(sourceImg||mounted).getBoundingClientRect();
+ const cs=getComputedStyle(st.flight);
+ const from={left:cs.left,top:cs.top,width:cs.width,height:cs.height};
  const move=st.flight.animate([
-  {transform:st.toTransform},
-  {offset:.72,transform:`translate3d(${st.dx*.22}px,${st.dy*.22}px,68px) scale(${1+(st.scale-1)*.22})`},
-  {transform:st.fromTransform}
- ],{duration:860,easing:'cubic-bezier(.33,.02,.18,1)',fill:'forwards'});
+  from,
+  {left:`${r.left}px`,top:`${r.top}px`,width:`${r.width}px`,height:`${r.height}px`}
+ ],{duration:560,easing:'cubic-bezier(.33,.02,.18,1)',fill:'forwards'});
  st.cloneImg.animate([
   {filter:'none'},
-  {offset:.58,filter:'sepia(.20) saturate(.88) contrast(.98) brightness(1.02)'},
-  {offset:.88,filter:'sepia(.72) saturate(.65) contrast(.93) brightness(1.04)'},
+  {offset:.62,filter:'sepia(.20) saturate(.88) contrast(.98) brightness(1.02)'},
   {filter:'sepia(.78) saturate(.62) contrast(.92) brightness(1.04)'}
- ],{duration:860,easing:'cubic-bezier(.33,.02,.18,1)',fill:'forwards'});
+ ],{duration:560,easing:'ease-in',fill:'forwards'});
+ const fade=st.backdrop.animate([{opacity:1},{offset:.45,opacity:1},{opacity:0}],{duration:560,fill:'forwards'});
  move.onfinish=finish;
 }
 
