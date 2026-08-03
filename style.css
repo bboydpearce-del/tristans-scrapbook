@@ -786,3 +786,31 @@ body:has(.viewport-photo-overlay) .reader-title{opacity:.12!important;pointer-ev
 @media(max-width:700px){
   .viewport-photo-caption{font-size:.92rem;bottom:2vh}
 }
+
+/* v2.69 — portrait-phone controls belong visually to the open book.
+   Desktop and landscape layouts are intentionally unchanged. */
+@media (max-width:700px) and (orientation:portrait){
+  .reader-close{
+    font-size:17px!important;
+    top:calc(50% - 35vw)!important;
+    right:8vw!important;
+    line-height:1!important;
+  }
+  .page-arrow{
+    top:50%!important;
+    bottom:auto!important;
+    width:60px!important;
+    height:76px!important;
+    transform:translateY(-50%)!important;
+  }
+  .page-prev{left:0!important}
+  .page-next{right:0!important}
+  .page-arrow > span{
+    width:48px!important;
+    height:38px!important;
+  }
+  .page-arrow > span img{
+    width:44px!important;
+    max-height:26px!important;
+  }
+}
