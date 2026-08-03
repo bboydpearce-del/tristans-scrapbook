@@ -814,3 +814,46 @@ body:has(.viewport-photo-overlay) .reader-title{opacity:.12!important;pointer-ev
     max-height:26px!important;
   }
 }
+
+/* v2.70 — phone landscape layout.
+   Recalculate the album from the available height, leaving clear side gutters
+   for Albums and the two page motifs instead of letting them overlap the book. */
+@media (orientation:landscape) and (max-width:1000px) and (max-height:600px){
+  .reader-screen{
+    min-height:100svh;
+  }
+  .album-stage{
+    width:100vw!important;
+    height:100svh!important;
+    padding:16px 112px 14px!important;
+  }
+  .open-album{
+    --page-w:min(38vw,calc((100svh - 34px)/1.27))!important;
+    width:calc(var(--page-w)*2)!important;
+    height:calc(var(--page-w)*1.27)!important;
+    max-height:calc(100svh - 34px)!important;
+  }
+  .reader-close{
+    font-size:16px!important;
+    line-height:1!important;
+    top:max(12px,env(safe-area-inset-top))!important;
+    right:max(18px,env(safe-area-inset-right))!important;
+  }
+  .page-arrow{
+    top:50%!important;
+    bottom:auto!important;
+    width:76px!important;
+    height:88px!important;
+    transform:translateY(-50%)!important;
+  }
+  .page-prev{left:max(16px,env(safe-area-inset-left))!important}
+  .page-next{right:max(16px,env(safe-area-inset-right))!important}
+  .page-arrow > span{
+    width:62px!important;
+    height:42px!important;
+  }
+  .page-arrow > span img{
+    width:56px!important;
+    max-height:30px!important;
+  }
+}
