@@ -1,54 +1,500 @@
 const app=document.getElementById('app');
 const data=window.SCRAPBOOK_DATA;
-let currentCategory=null,currentIndex=0,touchStartX=0;
-let zoom=1,panX=0,panY=0,pointerStart=null,pinchStart=null;
-function topbar(){return `<header class="topbar"><div class="topbar-inner"><button class="brand" onclick="showContents()"><img src="images/ui/tristan-portrait.jpg" alt=""><span>Tristan's scrapbook</span></button><nav class="nav-actions" aria-label="Main"><button class="text-btn" onclick="showContents()">Contents</button><button class="text-btn" onclick="showEnding()">Be seeing you</button></nav></div></header>`}
-function showCover(){document.title='Tristan — Remember me';app.innerHTML=`<section class="screen cover fade-in"><div><button class="portrait-button" aria-label="Open Tristan's scrapbook" onclick="showContents()"><img class="portrait" src="images/ui/tristan-portrait.jpg" alt="Portrait of Tristan"></button><h1 class="cover-phrase">Remember me</h1><div class="hint">Touch the portrait</div></div></section>`;scrollTo(0,0)}
-function showContents(){closeViewer();document.title="Tristan's scrapbook";let cards=data.categories.map((c,i)=>`<button class="chapter" onclick="showGallery(${i})"><img src="${c.cover}" alt=""><span class="chapter-copy"><span class="chapter-name">${esc(c.name)}</span><span class="chapter-count">${c.count} photographs</span></span></button>`).join('');cards+=`<button class="chapter placeholder" onclick="showPlaceholder()"><span class="chapter-copy"><span class="chapter-name">Screenshots and text</span><span class="chapter-count">To be added later</span></span></button>`;app.innerHTML=`${topbar()}<section class="contents fade-in"><h1>Tristan</h1><p class="intro">Choose a chapter, then touch any photograph to see it full size.</p><div class="chapter-grid">${cards}</div></section>`;scrollTo(0,0)}
-function showGallery(i){currentCategory=i;const c=data.categories[i];document.title=`${c.name} — Tristan`;app.innerHTML=`${topbar()}<section class="gallery fade-in"><div class="gallery-heading"><h1>${esc(c.name)}</h1><div class="gallery-meta">${c.count} photographs</div></div><div class="photo-grid">${c.items.map((p,j)=>`<button class="thumb" onclick="openViewer(${j})" aria-label="View ${esc(p.caption)}"><img loading="lazy" src="${p.thumb}" alt="${esc(p.caption)}"></button>`).join('')}</div></section>`;scrollTo(0,0)}
-function showPlaceholder(){document.title='Screenshots and text — Tristan';app.innerHTML=`${topbar()}<section class="contents fade-in"><h1>Screenshots and text</h1><p class="intro">This chapter has been left aside for now, ready for Sian to consider once the rest of the scrapbook has taken shape.</p></section>`;scrollTo(0,0)}
-function openViewer(i){currentIndex=i;renderViewer();document.addEventListener('keydown',viewerKeys);}
-function renderViewer(){
-  resetZoom();
-  const c=data.categories[currentCategory],p=c.items[currentIndex];
-  document.querySelector('.viewer')?.remove();
-  const v=document.createElement('div');
-  v.className='viewer';
-  v.innerHTML=`<div class="viewerbar"><button class="viewer-btn close-viewer" aria-label="Close">×</button><div class="viewer-count">${currentIndex+1} of ${c.items.length}</div><button class="viewer-btn contents-viewer" aria-label="Contents">⌂</button></div><div class="viewer-stage"><button class="arrow prev" aria-label="Previous">‹</button><img src="${p.src}" alt="${esc(p.caption)}" draggable="false"><button class="arrow next" aria-label="Next">›</button><div class="caption">${esc(p.caption)}</div><div class="zoom-help">Wheel or double-click to zoom</div></div>`;
-  document.body.appendChild(v);
-  const stage=v.querySelector('.viewer-stage'),img=v.querySelector('img');
-  v.querySelector('.close-viewer').addEventListener('click',closeViewer);
-  v.querySelector('.contents-viewer').addEventListener('click',showContents);
-  v.querySelector('.prev').addEventListener('click',()=>step(-1));
-  v.querySelector('.next').addEventListener('click',()=>step(1));
-  stage.addEventListener('wheel',onWheel,{passive:false});
-  stage.addEventListener('dblclick',()=>setZoom(zoom>1?1:2));
-  stage.addEventListener('pointerdown',onPointerDown);
-  stage.addEventListener('pointermove',onPointerMove);
-  stage.addEventListener('pointerup',onPointerUp);
-  stage.addEventListener('pointercancel',onPointerUp);
-  stage.addEventListener('touchstart',onTouchStart,{passive:false});
-  stage.addEventListener('touchmove',onTouchMove,{passive:false});
-  stage.addEventListener('touchend',onTouchEnd,{passive:false});
-  img.addEventListener('load',fitImageToStage);
-  window.addEventListener('resize',fitImageToStage,{once:true});
+if(!app) throw new Error('Gallery could not find the #app element.');
+if(!data || !Array.isArray(data.categories)) throw new Error('Gallery data did not load.');
+let currentCategory=0,currentIndex=0,isViewing=false,activeMountedPhoto=null;
+let albumInteractionLocked=false;
+
+const BOOKS=[
+ {l:2.5,t:17.2,w:22.1,h:37.2,r:-1.5},
+ {l:25.0,t:17.0,w:22.0,h:33.5,r:-1},
+ {l:45.8,t:15.8,w:23.4,h:35.0,r:-1},
+ {l:68.5,t:22.6,w:25.0,h:32.8,r:1},
+ {l:2.5,t:50.7,w:28.0,h:44.0,r:-1},
+ {l:27.7,t:49.2,w:23.8,h:42.0,r:-1},
+ {l:49.7,t:49.0,w:24.4,h:40.5,r:-1},
+ {l:73.3,t:55.0,w:25.5,h:39.3,r:.5}
+];
+
+// Geometry of the visible album inside each transparent cover PNG.  The cover
+// photographs are not identical rectangles: each was cut from the desk at a
+// slightly different angle and aspect ratio.  The reader must use that same
+// physical geometry rather than forcing every album into one universal shape.
+const COVER_GEOMETRY=[
+ {ratio:347.467/318.213,angle:-5.711,sx:361/318.213,sy:381/347.467},
+ {ratio:332.758/310.371,angle:-6.511,sx:357/310.371,sy:360/332.758},
+ {ratio:347.704/308.741,angle:-9.462,sx:373/308.741,sy:352/347.704},
+ {ratio:335.135/364.879,angle:-5.641,sx:408/364.879,sy:345/335.135},
+ {ratio:393.370/387.636,angle:-6.143,sx:427/387.636,sy:439/393.370},
+ {ratio:394.554/330.801,angle:-7.125,sx:386/330.801,sy:431/394.554},
+ {ratio:381.725/344.135,angle:-5.932,sx:391/344.135,sy:417/381.725},
+ {ratio:381.263/358.219,angle:-8.471,sx:415/358.219,sy:387/381.263}
+];
+
+function showCover(){showDesk()}
+
+function showDesk(){
+ albumInteractionLocked=false;
+ closePhoto(false);
+ document.title="Tristan's Gallery";
+ const books=data.categories.map((c,i)=>`<button class="desk-book desk-book-${i+1}" data-book="${i}" aria-label="Open ${esc(c.name)}"><span>${esc(c.name)}</span></button>`).join('');
+ app.innerHTML=`<section class="desk-screen"><div class="desk-frame"><img class="desk-image" src="images/ui/album-desk.png" alt="Eight photograph albums arranged on a wooden writing desk"><div class="desk-hotspots">${books}</div></div></section>`;
+ const deskScreen=app.querySelector('.desk-screen');
+ const settleDeskSize=()=>{
+  const viewport=window.visualViewport;
+  const vw=Math.round(viewport?.width || document.documentElement.clientWidth || innerWidth);
+  const vh=Math.round(viewport?.height || document.documentElement.clientHeight || innerHeight);
+  deskScreen.style.setProperty('--desk-vw',`${vw}px`);
+  deskScreen.style.setProperty('--desk-vh',`${vh}px`);
+  deskScreen.classList.add('desk-size-ready');
+ };
+ // Do not expose an oversized provisional frame. Measure after the browser has
+ // completed its opening layout, then reveal the desk at its final pixel size.
+ requestAnimationFrame(()=>requestAnimationFrame(settleDeskSize));
+ app.querySelectorAll('.desk-book').forEach(b=>b.addEventListener('click',e=>openAlbum(Number(b.dataset.book),b)));
 }
-function resetZoom(){zoom=1;panX=0;panY=0;pointerStart=null;pinchStart=null}
-function fitImageToStage(){const stage=document.querySelector('.viewer-stage'),img=stage?.querySelector('img');if(!stage||!img||!img.naturalWidth)return;const w=stage.clientWidth,h=stage.clientHeight;const fit=Math.min(w/img.naturalWidth,h/img.naturalHeight);img.style.width=`${Math.floor(img.naturalWidth*fit)}px`;img.style.height=`${Math.floor(img.naturalHeight*fit)}px`;applyTransform()}
-function applyTransform(){const stage=document.querySelector('.viewer-stage'),img=stage?.querySelector('img');if(!img)return;img.style.transform=`translate(calc(-50% + ${panX}px),calc(-50% + ${panY}px)) scale(${zoom})`;stage.classList.toggle('zoomed',zoom>1.01)}
-function setZoom(next){zoom=Math.max(1,Math.min(5,next));if(zoom===1){panX=0;panY=0}applyTransform()}
-function onWheel(e){e.preventDefault();setZoom(zoom*(e.deltaY<0?1.15:0.87))}
-function onPointerDown(e){if(zoom<=1)return;pointerStart={id:e.pointerId,x:e.clientX,y:e.clientY,panX,panY};e.currentTarget.setPointerCapture(e.pointerId);e.currentTarget.classList.add('dragging')}
-function onPointerMove(e){if(!pointerStart||pointerStart.id!==e.pointerId)return;panX=pointerStart.panX+(e.clientX-pointerStart.x);panY=pointerStart.panY+(e.clientY-pointerStart.y);applyTransform()}
-function onPointerUp(e){if(pointerStart?.id===e.pointerId)pointerStart=null;e.currentTarget.classList.remove('dragging')}
-function distance(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}
-function onTouchStart(e){if(e.touches.length===2){pinchStart={distance:distance(e.touches[0],e.touches[1]),zoom};e.preventDefault()}else if(e.touches.length===1){touchStartX=e.touches[0].screenX}}
-function onTouchMove(e){if(e.touches.length===2&&pinchStart){e.preventDefault();setZoom(pinchStart.zoom*distance(e.touches[0],e.touches[1])/pinchStart.distance)}}
-function onTouchEnd(e){if(e.touches.length<2)pinchStart=null;if(zoom<=1&&e.changedTouches.length){const dx=e.changedTouches[0].screenX-touchStartX;if(Math.abs(dx)>45)step(dx<0?1:-1)}}
-function step(n){const len=data.categories[currentCategory].items.length;currentIndex=(currentIndex+n+len)%len;renderViewer()}
-function closeViewer(){document.querySelector('.viewer')?.remove();document.removeEventListener('keydown',viewerKeys);resetZoom()}
-function viewerKeys(e){if(e.key==='Escape')closeViewer();if(e.key==='ArrowRight'&&zoom===1)step(1);if(e.key==='ArrowLeft'&&zoom===1)step(-1);if(e.key==='+'||e.key==='=')setZoom(zoom*1.2);if(e.key==='-')setZoom(zoom/1.2);if(e.key==='0')setZoom(1)}
-function showEnding(){closeViewer();document.title='Tristan — Be seeing you';app.innerHTML=`<section class="screen ending fade-in"><div class="ending-wrap"><img class="portrait" src="images/ui/tristan-portrait.jpg" alt="Portrait of Tristan"><h1 class="end-phrase">Be seeing you</h1><div class="end-options"><button class="end-link" onclick="showCover()">Remember me again</button><button class="end-link" onclick="finish()">Be seeing you</button></div></div></section>`;scrollTo(0,0)}
-function finish(){app.innerHTML=`<section class="screen goodbye"><p>Be seeing you.</p></section>`;document.title='Be seeing you'}
+
+function openAlbum(i,button){
+ // Acquire one global lock before doing any layout or animation work. Without
+ // this, two rapid clicks on different desk books can create two independent
+ // flyers, which then stack over one another and leave the reader frozen.
+ if(albumInteractionLocked) return;
+ albumInteractionLocked=true;
+ app.querySelectorAll('.desk-book').forEach(bookButton=>{
+  bookButton.disabled=true;
+  bookButton.setAttribute('aria-disabled','true');
+ });
+ currentCategory=i; currentIndex=0;
+ // Use the hotspot's unrotated box within the desk, not its transformed
+ // axis-aligned bounding rectangle.  The album PNG already contains the book
+ // at its photographed desk angle; measuring the rotated hotspot and then
+ // rotating the flyer again caused the visible snap at pickup.
+ const frame=button.closest('.desk-frame');
+ const fr=frame.getBoundingClientRect();
+ const geometry=BOOKS[i];
+ const br={
+  left:fr.left+(fr.width*geometry.l/100),
+  top:fr.top+(fr.height*geometry.t/100),
+  width:fr.width*geometry.w/100,
+  height:fr.height*geometry.h/100
+ };
+ // The two remaining cut-outs (albums 4 and 7) are lifted inside a
+ // transparent padded shell.  The visible image keeps exactly the same desk
+ // geometry, but the browser receives extra raster space around it so the
+ // rotated lower edge cannot be clipped by the compositing boundary.
+ const paddedFlyer=(i===3 || i===6);
+ const flyer=document.createElement(paddedFlyer?'div':'img');
+ flyer.className='album-flyer album-flyer-smooth'+(paddedFlyer?' album-flyer-padded':'');
+ let flyerImage=null;
+ const flyerPad=paddedFlyer?18:0;
+ if(paddedFlyer){
+  flyerImage=document.createElement('img');
+  flyerImage.className='album-flyer-padded-image';
+  flyerImage.src=`images/ui/albums/album-${i+1}.png`;
+  flyerImage.alt='';
+  flyer.appendChild(flyerImage);
+ }else{
+  flyer.src=`images/ui/albums/album-${i+1}.png`;
+  flyer.alt='';
+ }
+ // The desk album is baked into the desk photograph, whereas the moving
+ // album is a separately cut image. Their painted edges are not pixel-identical,
+ // so an instantaneous opaque substitution always produces a visible snap.
+ // Begin the cut-out transparent and blend it in over the first part of the lift.
+ flyer.style.left=`${br.left-flyerPad}px`;
+ flyer.style.top=`${br.top-flyerPad}px`;
+ flyer.style.opacity='0';
+ flyer.style.width=`${br.width+flyerPad*2}px`;
+ flyer.style.height=`${br.height+flyerPad*2}px`;
+ flyer.style.transformOrigin=paddedFlyer?`${flyerPad}px ${flyerPad}px`:'top left';
+ if(flyerImage){
+  flyerImage.style.left=`${flyerPad}px`;
+  flyerImage.style.top=`${flyerPad}px`;
+  flyerImage.style.width=`${br.width}px`;
+  flyerImage.style.height=`${br.height}px`;
+ }
+ document.body.appendChild(flyer);
+ button.style.visibility='hidden';
+ app.querySelector('.desk-screen')?.classList.add('desk-receding');
+
+ const ratio=br.height/br.width;
+ const targetW=Math.min(innerWidth*.46,560);
+ const targetH=targetW*ratio;
+ const targetLeft=(innerWidth-targetW)/2;
+ const targetTop=Math.max(42,(innerHeight-targetH)/2);
+ const dx=targetLeft-br.left;
+ const dy=targetTop-br.top;
+ const scale=targetW/br.width;
+
+ const lift=flyer.animate([
+  {transform:'translate3d(0,0,0) scale(1) rotate(0deg)',filter:'drop-shadow(0 8px 8px rgba(0,0,0,.18))',opacity:0},
+  {offset:.08,transform:`translate3d(${dx*.012}px,${dy*.012}px,0) scale(${1+(scale-1)*.008}) rotate(-.04deg)`,filter:'drop-shadow(0 9px 9px rgba(0,0,0,.20))',opacity:.45},
+  {offset:.18,transform:`translate3d(${dx*.055}px,${dy*.055}px,0) scale(${1+(scale-1)*.045}) rotate(-.15deg)`,filter:'drop-shadow(0 11px 10px rgba(0,0,0,.25))',opacity:1},
+  {offset:.72,transform:`translate3d(${dx*.79}px,${dy*.79}px,0) scale(${1+(scale-1)*.79}) rotate(-1.7deg)`,filter:'drop-shadow(0 28px 25px rgba(0,0,0,.50))',opacity:1},
+  {transform:`translate3d(${dx}px,${dy}px,0) scale(${scale}) rotate(-1.5deg)`,filter:'drop-shadow(0 34px 30px rgba(0,0,0,.58))',opacity:1}
+ ],{
+  duration:1500,
+  easing:'cubic-bezier(.42,0,.18,1)',
+  fill:'forwards'
+ });
+
+ lift.finished.then(()=>{
+  // Keep the original desk and the exact same lifted image on screen. Replacing
+  // them with a second "held" scene caused the desk to snap in geometry and
+  // brightness at the moment the lift finished.
+  lift.commitStyles();
+  lift.cancel();
+  flyer.classList.add('album-flyer-waiting');
+  flyer.setAttribute('role','button');
+  flyer.setAttribute('tabindex','0');
+  flyer.setAttribute('aria-label',`Open ${data.categories[i].name}`);
+
+  const open=()=>{
+   if(flyer.dataset.opening==='true')return;
+   flyer.dataset.opening='true';
+   flyer.classList.remove('album-flyer-waiting');
+
+   // Create the reader with its own cover still closed. The lifted cover then
+   // hands over to that closed cover before any opening movement begins. This
+   // prevents two covers being visible while one of them rotates.
+   const book=renderAlbum(i,'handoff');
+   const current=flyer.style.transform;
+   const commit=flyer.animate([
+    {transform:current,opacity:1},
+    {transform:current,opacity:0}
+   ],{duration:140,easing:'linear',fill:'forwards'});
+   commit.finished.then(()=>{
+    flyer.remove();
+    requestAnimationFrame(()=>requestAnimationFrame(()=>book?.beginOpening?.()));
+   }).catch(()=>{
+    flyer.remove();
+    book?.beginOpening?.();
+   });
+  };
+  flyer.addEventListener('click',open,{once:true});
+  flyer.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}});
+ }).catch(()=>{
+  flyer.remove();
+  albumInteractionLocked=false;
+  showDesk();
+ });
+}
+
+function photoPage(itemIndex, side){
+ const c=data.categories[currentCategory];
+ if(itemIndex<0 || itemIndex>=c.items.length){
+  return `<div class="page-inner page-inner-${side}"><div class="album-title-page"><span class="title-rule"></span><p>${itemIndex<0?'Photographs of Tristan':'End of album'}</p></div></div>`;
+ }
+ const p=c.items[itemIndex];
+ return `<div class="page-inner page-inner-photo">
+  <button class="mounted-photo" data-item="${itemIndex}" type="button" aria-label="View ${esc(p.caption)} in full colour">
+   <img src="${p.src}" alt="${esc(p.caption)}" draggable="false">
+  </button>
+ </div>`;
+}
+
+function blankAlbumPage(side){
+ return `<div class="page-inner page-inner-${side}" aria-hidden="true"></div>`;
+}
+
+function makeSheets(c){
+ const count=c.items.length;
+ return Array.from({length:count},(_,sheetIndex)=>{
+  const turned=sheetIndex<currentIndex;
+  const z=turned ? 30+sheetIndex : 200-sheetIndex;
+  return `<div class="book-sheet ${turned?'is-turned':''}" data-sheet="${sheetIndex}" style="z-index:${z}">
+   <div class="sheet-side sheet-side-front">${photoPage(sheetIndex,'right')}</div>
+   <div class="sheet-side sheet-side-back">${blankAlbumPage('left')}</div>
+  </div>`;
+ }).join('');
+}
+
+function renderAlbum(i,opening=false){
+ const c=data.categories[i];
+ const sheetCount=c.items.length;
+ currentIndex=Math.max(0,Math.min(currentIndex,sheetCount));
+ document.title=`${c.name} — Tristan's Gallery`;
+ app.innerHTML=`<section class="reader-screen">
+  <div class="reader-desk" aria-hidden="true"><img src="images/ui/album-desk.png" alt=""></div>
+  <button class="reader-close" type="button" aria-label="Return to albums">Albums</button>
+  <div class="album-stage">
+   <div class="open-album" style="--book-ratio:${COVER_GEOMETRY[i].ratio.toFixed(4)};--cover-correction:${(-COVER_GEOMETRY[i].angle).toFixed(3)}deg;--cover-scale-x:${COVER_GEOMETRY[i].sx.toFixed(4)};--cover-scale-y:${COVER_GEOMETRY[i].sy.toFixed(4)}" aria-label="Open ${esc(c.name)} photograph album">
+    <div class="book-shadow" aria-hidden="true"></div>
+    <div class="back-cover back-cover-left" aria-hidden="true"></div>
+    <div class="back-cover back-cover-right" aria-hidden="true"></div>
+    <div class="left-page-anchor" aria-hidden="true"></div>
+    <div class="page-stack page-stack-right" aria-hidden="true"></div>
+    <article class="album-page album-page-right base-page-right">${photoPage(c.items.length,'right')}</article>
+    <div class="sheet-stack">${makeSheets(c)}</div>
+    <button class="photo-hit-area" type="button" aria-label="View current photograph in full colour"></button>
+    <div class="book-spine" aria-hidden="true"></div>
+    <div class="front-cover" aria-hidden="true"><img src="images/ui/albums/album-${i+1}.png" alt="" draggable="false"><div class="cover-inside"></div></div>
+   </div>
+  </div>
+  <button class="page-arrow page-prev" type="button" aria-label="Previous sheet" ${currentIndex===0?'disabled':''}><span aria-hidden="true"><img src="images/ui/page-turn-motif.png" alt=""></span></button>
+  <button class="page-arrow page-next" type="button" aria-label="Next sheet" ${currentIndex>=sheetCount?'disabled':''}><span aria-hidden="true"><img src="images/ui/page-turn-motif.png" alt=""></span></button>
+ </section>`;
+ app.querySelector('.reader-close').addEventListener('click',showDesk);
+ bindMountedPhotos();
+ app.querySelector('.page-prev').addEventListener('click',()=>turnPage(-1));
+ app.querySelector('.page-next').addEventListener('click',()=>turnPage(1));
+ updatePhotoHitArea();
+ const book=app.querySelector('.open-album');
+
+ // The blank left page is intentionally not present in the DOM while the
+ // album is closed.  It is created only after the front cover has actually
+ // begun to move, preventing any single-frame glimpse during the handoff.
+ const addLeftPage=()=>{
+  if(!book || book.querySelector('.base-page-left')) return;
+  const anchor=book.querySelector('.left-page-anchor');
+  if(!anchor) return;
+  anchor.insertAdjacentHTML('afterend',
+   `<div class="page-stack page-stack-left" aria-hidden="true"></div>
+    <article class="album-page album-page-left base-page-left"><div class="page-inner page-inner-left" aria-label="Blank inside cover"></div></article>`
+  );
+ };
+ const beginOpening=()=>{
+  if(!book) return;
+  book.classList.add('is-open');
+  setTimeout(addLeftPage,220);
+ };
+
+ if(opening===true){setTimeout(beginOpening,260)}
+ else if(opening==='handoff'){book.beginOpening=beginOpening}
+ else {addLeftPage(); book?.classList.add('is-open')}
+ addSwipe(book);
+ return book;
+}
+
+function bindMountedPhotos(){
+ // Photo clicks are handled once at document level. Keeping this function
+ // allows the album renderer to remain unchanged.
+}
+
+function getCurrentVisibleMountedPhoto(){
+ const c=data.categories[currentCategory];
+ if(!c || currentIndex<0 || currentIndex>=c.items.length) return null;
+ return app.querySelector(`.book-sheet[data-sheet="${currentIndex}"] .mounted-photo`);
+}
+
+function pointInsideRect(x,y,r){
+ return x>=r.left && x<=r.right && y>=r.top && y<=r.bottom;
+}
+
+function handleMountedPhotoClick(e){
+ if(isViewing) return;
+ let mounted=e.target.closest && e.target.closest('.mounted-photo');
+ // In a 3-D transformed page stack the browser can report an invisible sheet
+ // as the click target. Fall back to the photograph's actual screen rectangle.
+ if(!mounted){
+  const visible=getCurrentVisibleMountedPhoto();
+  const img=visible&&visible.querySelector('img');
+  if(img){
+   const r=img.getBoundingClientRect();
+   if(pointInsideRect(e.clientX,e.clientY,r)) mounted=visible;
+  }
+ }
+ if(!mounted || !document.body.contains(mounted)) return;
+ e.preventDefault();
+ e.stopImmediatePropagation();
+ const itemIndex=Number(mounted.dataset.item);
+ if(Number.isInteger(itemIndex)) openPhoto(itemIndex,mounted);
+}
+document.addEventListener('click',handleMountedPhotoClick,true);
+window.openPhoto=openPhoto;
+
+function openCurrentPhoto(){
+ const c=data.categories[currentCategory];
+ if(currentIndex<0 || currentIndex>=c.items.length)return;
+ const mounted=app.querySelector(`.book-sheet[data-sheet="${currentIndex}"] .mounted-photo`);
+ if(mounted) openPhoto(currentIndex,mounted);
+}
+
+function updatePhotoHitArea(){
+ const btn=app.querySelector('.photo-hit-area');
+ const c=data.categories[currentCategory];
+ if(!btn)return;
+ const available=currentIndex>=0 && currentIndex<c.items.length;
+ btn.disabled=!available;
+ btn.setAttribute('aria-label',available?`View ${c.items[currentIndex].caption} in full colour`:'No photograph on this page');
+}
+
+function updateSheetControls(){
+ const c=data.categories[currentCategory];
+ const sheetCount=c.items.length;
+ const prev=app.querySelector('.page-prev');
+ const next=app.querySelector('.page-next');
+ if(prev) prev.disabled=currentIndex===0;
+ if(next) next.disabled=currentIndex>=sheetCount;
+ updatePhotoHitArea();
+}
+
+function turnPage(dir){
+ const c=data.categories[currentCategory];
+ const sheetCount=c.items.length;
+ const target=currentIndex+dir;
+ if(target<0 || target>sheetCount)return;
+ const book=app.querySelector('.open-album');
+ if(!book || book.classList.contains('is-turning'))return;
+ const sheetIndex=dir>0?currentIndex:currentIndex-1;
+ const sheet=book.querySelector(`.book-sheet[data-sheet="${sheetIndex}"]`);
+ if(!sheet)return;
+ book.classList.add('is-turning');
+ sheet.style.zIndex='400';
+ // Force layout before changing the transform so the browser performs a true turn.
+ void sheet.offsetWidth;
+ if(dir>0) sheet.classList.add('is-turned');
+ else sheet.classList.remove('is-turned');
+ currentIndex=target;
+ updateSheetControls();
+ const finish=()=>{
+  sheet.removeEventListener('transitionend',finish);
+  const idx=Number(sheet.dataset.sheet);
+  sheet.style.zIndex=sheet.classList.contains('is-turned')?String(30+idx):String(200-idx);
+  book.classList.remove('is-turning');
+ };
+ sheet.addEventListener('transitionend',finish);
+ setTimeout(finish,700);
+}
+
+function elementPositionWithin(el, ancestor){
+ let x=0,y=0,node=el;
+ while(node && node!==ancestor){
+  x+=node.offsetLeft||0;
+  y+=node.offsetTop||0;
+  node=node.offsetParent;
+ }
+ return {x,y};
+}
+
+function openPhoto(itemIndex,mounted){
+ if(isViewing)return;
+ const sourceImg=mounted&&mounted.querySelector('img');
+ if(!sourceImg)return;
+ const begin=()=>{
+  const p=data.categories[currentCategory].items[itemIndex];
+  const sourceRect=sourceImg.getBoundingClientRect();
+  if(!sourceRect.width||!sourceRect.height)return;
+
+  isViewing=true;
+  activeMountedPhoto=mounted;
+  mounted.style.visibility='hidden';
+
+  // The full-colour photograph now lives in an independent viewport layer.
+  // It is not a child of the transformed album, so the browser can render the
+  // source image at full resolution without inheriting book perspective.
+  const overlay=document.createElement('div');
+  overlay.className='viewport-photo-overlay';
+
+  const backdrop=document.createElement('button');
+  backdrop.type='button';
+  backdrop.className='viewport-photo-backdrop';
+  backdrop.setAttribute('aria-label','Return photograph to album');
+
+  const flight=document.createElement('button');
+  flight.type='button';
+  flight.className='viewport-photo-flight';
+  flight.setAttribute('aria-label','Return photograph to album');
+  Object.assign(flight.style,{
+   left:`${sourceRect.left}px`,top:`${sourceRect.top}px`,
+   width:`${sourceRect.width}px`,height:`${sourceRect.height}px`
+  });
+
+  const cloneImg=document.createElement('img');
+  cloneImg.src=p.src;
+  cloneImg.alt=p.caption||'';
+  flight.appendChild(cloneImg);
+
+  const caption=document.createElement('p');
+  caption.className='viewport-photo-caption';
+  caption.textContent=p.caption;
+
+  overlay.append(backdrop,flight,caption);
+  document.body.appendChild(overlay);
+
+  const dismiss=e=>{e.preventDefault();e.stopPropagation();closePhoto(true)};
+  flight.addEventListener('click',dismiss);
+  backdrop.addEventListener('click',dismiss);
+  document.addEventListener('keydown',photoKey);
+
+  const placeTarget=()=>{
+   const vw=window.innerWidth, vh=window.innerHeight;
+   const naturalW=cloneImg.naturalWidth||sourceRect.width;
+   const naturalH=cloneImg.naturalHeight||sourceRect.height;
+   const ratio=naturalW/naturalH;
+   const maxW=vw*.94;
+   const maxH=vh*.82;
+   let targetW=maxW, targetH=targetW/ratio;
+   if(targetH>maxH){targetH=maxH;targetW=targetH*ratio;}
+   const targetLeft=(vw-targetW)/2;
+   const targetTop=Math.max(10,(vh-targetH)/2-12);
+   const target={left:targetLeft,top:targetTop,width:targetW,height:targetH};
+
+   const move=flight.animate([
+    {left:`${sourceRect.left}px`,top:`${sourceRect.top}px`,width:`${sourceRect.width}px`,height:`${sourceRect.height}px`},
+    {left:`${target.left}px`,top:`${target.top}px`,width:`${target.width}px`,height:`${target.height}px`}
+   ],{duration:620,easing:'cubic-bezier(.2,.72,.2,1)',fill:'forwards'});
+   const colour=cloneImg.animate([
+    {filter:'sepia(.78) saturate(.62) contrast(.92) brightness(1.04)'},
+    {offset:.55,filter:'sepia(.15) saturate(.92) contrast(.99) brightness(1.01)'},
+    {filter:'none'}
+   ],{duration:620,easing:'ease-out',fill:'forwards'});
+   move.onfinish=()=>caption.classList.add('shown');
+   mounted._photoState={overlay,flight,cloneImg,backdrop,caption,dismiss,move,colour,target};
+  };
+
+  if(cloneImg.complete&&cloneImg.naturalWidth)placeTarget();
+  else cloneImg.addEventListener('load',placeTarget,{once:true});
+ };
+ if(sourceImg.complete&&sourceImg.naturalWidth)begin();
+ else sourceImg.addEventListener('load',begin,{once:true});
+}
+
+function closePhoto(animate=true){
+ const mounted=activeMountedPhoto;
+ if(!mounted){isViewing=false;return}
+ document.removeEventListener('keydown',photoKey);
+ const st=mounted._photoState;
+ const finish=()=>{
+  mounted.style.visibility='';
+  st?.overlay?.remove();
+  delete mounted._photoState;
+  isViewing=false;activeMountedPhoto=null;
+ };
+ if(!animate||!st){finish();return}
+ st.caption?.classList.remove('shown');
+ st.move?.cancel();st.colour?.cancel();
+ const sourceImg=mounted.querySelector('img');
+ const r=(sourceImg||mounted).getBoundingClientRect();
+ const cs=getComputedStyle(st.flight);
+ const from={left:cs.left,top:cs.top,width:cs.width,height:cs.height};
+ const move=st.flight.animate([
+  from,
+  {left:`${r.left}px`,top:`${r.top}px`,width:`${r.width}px`,height:`${r.height}px`}
+ ],{duration:560,easing:'cubic-bezier(.33,.02,.18,1)',fill:'forwards'});
+ st.cloneImg.animate([
+  {filter:'none'},
+  {offset:.62,filter:'sepia(.20) saturate(.88) contrast(.98) brightness(1.02)'},
+  {filter:'sepia(.78) saturate(.62) contrast(.92) brightness(1.04)'}
+ ],{duration:560,easing:'ease-in',fill:'forwards'});
+ const fade=st.backdrop.animate([{opacity:1},{offset:.45,opacity:1},{opacity:0}],{duration:560,fill:'forwards'});
+ move.onfinish=finish;
+}
+
+function photoKey(e){if(e.key==='Escape'||e.key==='Enter'||e.key===' ')closePhoto(true)}
+
+function addSwipe(el){
+ let startX=0,startY=0;
+ el.addEventListener('pointerdown',e=>{startX=e.clientX;startY=e.clientY});
+ el.addEventListener('pointerup',e=>{const dx=e.clientX-startX,dy=e.clientY-startY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy))turnPage(dx<0?1:-1)});
+}
+
+function showEnding(){
+ closePhoto(false);
+ document.title='Tristan — Be seeing you';
+ app.innerHTML=`<section class="screen ending"><div class="ending-wrap"><img class="portrait" src="images/ui/tristan-portrait.jpg" alt="Portrait of Tristan"><h1 class="end-phrase">Be seeing you</h1><button class="end-link" type="button">Remember me again</button></div></section>`;
+ app.querySelector('.end-link').addEventListener('click',showDesk);
+}
+
 function esc(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-showCover();
+showDesk();
