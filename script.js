@@ -367,6 +367,52 @@ function elementPositionWithin(el, ancestor){
  return {x,y};
 }
 
+function photoViewportTarget(img,fallbackRect){
+ const viewport=window.visualViewport;
+ const vw=viewport?.width || window.innerWidth;
+ const vh=viewport?.height || window.innerHeight;
+ const naturalW=img?.naturalWidth || fallbackRect?.width || 1;
+ const naturalH=img?.naturalHeight || fallbackRect?.height || 1;
+ const ratio=naturalW/naturalH;
+ const maxW=vw*.94;
+ const maxH=vh*.82;
+ let width=maxW,height=width/ratio;
+ if(height>maxH){height=maxH;width=height*ratio;}
+ return {
+  left:(vw-width)/2,
+  top:Math.max(10,(vh-height)/2-12),
+  width,height
+ };
+}
+
+let photoReflowTimer=0;
+function reflowOpenPhoto(){
+ const mounted=activeMountedPhoto;
+ const st=mounted&&mounted._photoState;
+ if(!st||!st.flight||!st.cloneImg)return;
+ st.move?.cancel();
+ st.move=null;
+ const target=photoViewportTarget(st.cloneImg,st.target);
+ Object.assign(st.flight.style,{
+  left:`${target.left}px`,top:`${target.top}px`,
+  width:`${target.width}px`,height:`${target.height}px`
+ });
+ st.caption.style.left='50%';
+ st.caption.style.top=(target.top+target.height+12)+'px';
+ st.caption.style.bottom='auto';
+ st.target=target;
+}
+function schedulePhotoReflow(){
+ if(!isViewing)return;
+ clearTimeout(photoReflowTimer);
+ // Mobile browsers report one or two provisional viewport sizes while rotating.
+ // Waiting briefly lets the final portrait/landscape geometry settle first.
+ photoReflowTimer=setTimeout(()=>requestAnimationFrame(reflowOpenPhoto),140);
+}
+window.addEventListener('resize',schedulePhotoReflow,{passive:true});
+window.addEventListener('orientationchange',schedulePhotoReflow,{passive:true});
+window.visualViewport?.addEventListener('resize',schedulePhotoReflow,{passive:true});
+
 function openPhoto(itemIndex,mounted){
  if(isViewing)return;
  const sourceImg=mounted&&mounted.querySelector('img');
@@ -418,17 +464,7 @@ function openPhoto(itemIndex,mounted){
   document.addEventListener('keydown',photoKey);
 
   const placeTarget=()=>{
-   const vw=window.innerWidth, vh=window.innerHeight;
-   const naturalW=cloneImg.naturalWidth||sourceRect.width;
-   const naturalH=cloneImg.naturalHeight||sourceRect.height;
-   const ratio=naturalW/naturalH;
-   const maxW=vw*.94;
-   const maxH=vh*.82;
-   let targetW=maxW, targetH=targetW/ratio;
-   if(targetH>maxH){targetH=maxH;targetW=targetH*ratio;}
-   const targetLeft=(vw-targetW)/2;
-   const targetTop=Math.max(10,(vh-targetH)/2-12);
-   const target={left:targetLeft,top:targetTop,width:targetW,height:targetH};
+   const target=photoViewportTarget(cloneImg,sourceRect);
 
    const move=flight.animate([
     {left:`${sourceRect.left}px`,top:`${sourceRect.top}px`,width:`${sourceRect.width}px`,height:`${sourceRect.height}px`},
@@ -440,11 +476,16 @@ function openPhoto(itemIndex,mounted){
     {filter:'none'}
    ],{duration:620,easing:'ease-out',fill:'forwards'});
    move.onfinish=()=>{
- caption.style.left='50%';
- caption.style.top=(target.top+target.height+12)+'px';
- caption.style.bottom='auto';
- caption.classList.add('shown');
-};
+    Object.assign(flight.style,{
+     left:`${target.left}px`,top:`${target.top}px`,
+     width:`${target.width}px`,height:`${target.height}px`
+    });
+    move.cancel();
+    caption.style.left='50%';
+    caption.style.top=(target.top+target.height+12)+'px';
+    caption.style.bottom='auto';
+    caption.classList.add('shown');
+   };
    mounted._photoState={overlay,flight,cloneImg,backdrop,caption,dismiss,move,colour,target};
   };
 
@@ -456,6 +497,7 @@ function openPhoto(itemIndex,mounted){
 }
 
 function closePhoto(animate=true){
+ clearTimeout(photoReflowTimer);
  const mounted=activeMountedPhoto;
  if(!mounted){isViewing=false;return}
  document.removeEventListener('keydown',photoKey);
