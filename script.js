@@ -586,6 +586,13 @@ function openPhoto(itemIndex,mounted){
    installPhotoGestures(photoState);
    flight.addEventListener('click',e=>{
     if(photoState.suppressClick){e.preventDefault();e.stopPropagation();return}
+    if(photoState.zoomScale>1.01){
+      photoState.zoomScale=1;
+      photoState.panX=0;
+      photoState.panY=0;
+      applyPhotoZoom(photoState,true);
+      return;
+    }
     dismiss(e);
    });
   };
