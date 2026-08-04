@@ -586,7 +586,9 @@ function openPhoto(itemIndex,mounted){
    installPhotoGestures(photoState);
    flight.addEventListener('click',e=>{
     if(photoState.suppressClick){e.preventDefault();e.stopPropagation();return}
-    if(photoState.zoomScale>1.01){
+    if(photoState.zoomScale>1.01 || Math.abs(photoState.panX)>0.5 || Math.abs(photoState.panY)>0.5){
+      e.preventDefault();
+      e.stopPropagation();
       photoState.zoomScale=1;
       photoState.panX=0;
       photoState.panY=0;

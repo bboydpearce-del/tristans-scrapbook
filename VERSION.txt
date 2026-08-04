@@ -1,6 +1,7 @@
 Tristan's Gallery
-Build: 2026-08-04 01:05 viewer-pinch-guard
-Purpose: force browsers to load the latest script.js and style.css; pinch gestures remain enabled only in the enlarged photo viewer.
+Build: 2026-08-04 02:15 tap-reset-then-close
+Purpose: when an enlarged photograph is zoomed or panned, the first tap resets it to fitted colour view; the next tap closes it back to the page.
 Files changed in this release:
+- script.js
 - index.html
 - VERSION.txt
