@@ -1,0 +1,6 @@
+Tristan's Gallery
+Build: 2026-08-04 01:05 viewer-pinch-guard
+Purpose: force browsers to load the latest script.js and style.css; pinch gestures remain enabled only in the enlarged photo viewer.
+Files changed in this release:
+- index.html
+- VERSION.txt
