@@ -213,11 +213,6 @@ window.SCRAPBOOK_DATA = {
           "caption": "Nice fence don't you think"
         },
         {
-          "src": "images/full/03-003-oh.jpg",
-          "thumb": "images/thumbs/03-003-oh.jpg",
-          "caption": "Oh"
-        },
-        {
           "src": "images/full/03-004-see-how-small-i-am.jpg",
           "thumb": "images/thumbs/03-004-see-how-small-i-am.jpg",
           "caption": "See how small I am and how huge the sofa is"
@@ -231,6 +226,11 @@ window.SCRAPBOOK_DATA = {
           "src": "images/full/03-006-uh-oh.jpg",
           "thumb": "images/thumbs/03-006-uh-oh.jpg",
           "caption": "Uh oh"
+        },
+        {
+          "src": "images/full/03-003-oh.jpg",
+          "thumb": "images/thumbs/03-003-oh.jpg",
+          "caption": "Oh"
         }
       ]
     },
