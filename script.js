@@ -33,6 +33,27 @@ const COVER_GEOMETRY=[
 
 function showCover(){showDesk()}
 
+let deskReflowTimers=[];
+function reflowClosedDesk(){
+ const deskScreen=app.querySelector('.desk-screen');
+ if(!deskScreen || deskScreen.classList.contains('desk-receding')) return;
+ const viewport=window.visualViewport;
+ const vw=Math.round(viewport?.width || document.documentElement.clientWidth || window.innerWidth);
+ const vh=Math.round(viewport?.height || document.documentElement.clientHeight || window.innerHeight);
+ deskScreen.style.setProperty('--desk-vw',`${vw}px`);
+ deskScreen.style.setProperty('--desk-vh',`${vh}px`);
+ // Force the flex container and percentage-based book hotspots to be laid out
+ // against the final post-rotation viewport rather than stale portrait geometry.
+ deskScreen.classList.remove('desk-size-ready');
+ void deskScreen.offsetWidth;
+ deskScreen.classList.add('desk-size-ready');
+}
+function scheduleClosedDeskReflow(){
+ if(!app.querySelector('.desk-screen')) return;
+ deskReflowTimers.forEach(clearTimeout);
+ deskReflowTimers=[40,180,420].map(delay=>setTimeout(()=>requestAnimationFrame(reflowClosedDesk),delay));
+}
+
 function showDesk(){
  albumInteractionLocked=false;
  closePhoto(false);
@@ -40,14 +61,7 @@ function showDesk(){
  const books=data.categories.map((c,i)=>`<button class="desk-book desk-book-${i+1}" data-book="${i}" aria-label="Open ${esc(c.name)}"><span>${esc(c.name)}</span></button>`).join('');
  app.innerHTML=`<section class="desk-screen"><div class="desk-frame"><img class="desk-image" src="images/ui/album-desk.png" alt="Eight photograph albums arranged on a wooden writing desk"><div class="desk-hotspots">${books}</div></div></section>`;
  const deskScreen=app.querySelector('.desk-screen');
- const settleDeskSize=()=>{
-  const viewport=window.visualViewport;
-  const vw=Math.round(viewport?.width || document.documentElement.clientWidth || innerWidth);
-  const vh=Math.round(viewport?.height || document.documentElement.clientHeight || innerHeight);
-  deskScreen.style.setProperty('--desk-vw',`${vw}px`);
-  deskScreen.style.setProperty('--desk-vh',`${vh}px`);
-  deskScreen.classList.add('desk-size-ready');
- };
+ const settleDeskSize=()=>reflowClosedDesk();
  // Do not expose an oversized provisional frame. Measure after the browser has
  // completed its opening layout, then reveal the desk at its final pixel size.
  requestAnimationFrame(()=>requestAnimationFrame(settleDeskSize));
@@ -409,9 +423,9 @@ function schedulePhotoReflow(){
  // Waiting briefly lets the final portrait/landscape geometry settle first.
  photoReflowTimer=setTimeout(()=>requestAnimationFrame(reflowOpenPhoto),140);
 }
-window.addEventListener('resize',schedulePhotoReflow,{passive:true});
-window.addEventListener('orientationchange',schedulePhotoReflow,{passive:true});
-window.visualViewport?.addEventListener('resize',schedulePhotoReflow,{passive:true});
+window.addEventListener('resize',()=>{schedulePhotoReflow();scheduleClosedDeskReflow()},{passive:true});
+window.addEventListener('orientationchange',()=>{schedulePhotoReflow();scheduleClosedDeskReflow()},{passive:true});
+window.visualViewport?.addEventListener('resize',()=>{schedulePhotoReflow();scheduleClosedDeskReflow()},{passive:true});
 
 function clampPhotoPan(state){
  const rect=state.flight.getBoundingClientRect();
@@ -586,9 +600,7 @@ function openPhoto(itemIndex,mounted){
    installPhotoGestures(photoState);
    flight.addEventListener('click',e=>{
     if(photoState.suppressClick){e.preventDefault();e.stopPropagation();return}
-    if(photoState.zoomScale>1.01 || Math.abs(photoState.panX)>0.5 || Math.abs(photoState.panY)>0.5){
-      e.preventDefault();
-      e.stopPropagation();
+    if(photoState.zoomScale>1.01){
       photoState.zoomScale=1;
       photoState.panX=0;
       photoState.panY=0;
