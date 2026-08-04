@@ -859,20 +859,27 @@ body:has(.viewport-photo-overlay) .reader-title{opacity:.12!important;pointer-ev
 }
 
 
-/* v2.70 — bounded photo pinch zoom. Gestures stay inside the independent
-   viewer and cannot leak through to page turning or collapse the overlay. */
+/* v2.71 — gesture state isolation.
+   The resting album ignores all pinch gestures. The independent full-photo
+   viewer alone owns zoom and pan, bounded to a safe 1x–2.5x range. */
+.reader-screen .open-album,
+.reader-screen .mounted-photo,
+.reader-screen .photo-hit-area{
+  touch-action:none;
+}
 .viewport-photo-overlay,
 .viewport-photo-flight,
 .viewport-photo-flight img{
-  touch-action:none!important;
-  overscroll-behavior:contain;
+  touch-action:none;
+  overscroll-behavior:none;
 }
 .viewport-photo-flight{
-  user-select:none;
-  -webkit-user-select:none;
+  overflow:visible;
 }
 .viewport-photo-flight img{
-  pointer-events:none;
+  transform:translate3d(0,0,0) scale(1);
   transform-origin:center center;
-  backface-visibility:hidden;
+  will-change:transform;
+  user-select:none;
+  -webkit-user-drag:none;
 }

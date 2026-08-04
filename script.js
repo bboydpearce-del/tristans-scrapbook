@@ -400,7 +400,6 @@ function reflowOpenPhoto(){
  st.caption.style.left='50%';
  st.caption.style.top=(target.top+target.height+12)+'px';
  st.caption.style.bottom='auto';
- st.gestures?.reset();
  st.target=target;
 }
 function schedulePhotoReflow(){
@@ -414,103 +413,101 @@ window.addEventListener('resize',schedulePhotoReflow,{passive:true});
 window.addEventListener('orientationchange',schedulePhotoReflow,{passive:true});
 window.visualViewport?.addEventListener('resize',schedulePhotoReflow,{passive:true});
 
-
-function installBoundedPhotoGestures(flight,cloneImg,closeHandler){
- const pointers=new Map();
- let scale=1,tx=0,ty=0;
- let startScale=1,startTx=0,startTy=0,startDistance=0,startMidX=0,startMidY=0;
- let singleStartX=0,singleStartY=0,singleStartTime=0;
- let moved=false;
- const MAX_SCALE=2.35;
- const MOVE_TOLERANCE=9;
-
- const baseImageSize=()=>{
-  const r=flight.getBoundingClientRect();
-  const iw=cloneImg.naturalWidth||r.width;
-  const ih=cloneImg.naturalHeight||r.height;
-  const fit=Math.min(r.width/iw,r.height/ih);
-  return {w:iw*fit,h:ih*fit,cw:r.width,ch:r.height};
- };
- const clamp=()=>{
-  const {w,h,cw,ch}=baseImageSize();
-  const maxX=Math.max(0,(w*scale-cw)/2);
-  const maxY=Math.max(0,(h*scale-ch)/2);
-  tx=Math.max(-maxX,Math.min(maxX,tx));
-  ty=Math.max(-maxY,Math.min(maxY,ty));
- };
- const apply=()=>{
-  clamp();
-  cloneImg.style.transform=`translate3d(${tx}px,${ty}px,0) scale(${scale})`;
- };
- const reset=()=>{
-  scale=1;tx=0;ty=0;apply();
- };
- const midpoint=(a,b)=>({x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2});
- const distance=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
-
- cloneImg.style.transformOrigin='center center';
- cloneImg.style.willChange='transform';
- cloneImg.style.transition='transform .12s ease-out';
- flight.style.touchAction='none';
-
- flight.addEventListener('pointerdown',e=>{
-  e.preventDefault();e.stopPropagation();
-  flight.setPointerCapture?.(e.pointerId);
-  pointers.set(e.pointerId,e);
-  moved=false;
-  cloneImg.style.transition='none';
-  if(pointers.size===1){
-   singleStartX=e.clientX;singleStartY=e.clientY;singleStartTime=performance.now();
-   startTx=tx;startTy=ty;
-  }else if(pointers.size===2){
-   const [a,b]=[...pointers.values()];
-   startDistance=Math.max(1,distance(a,b));
-   const m=midpoint(a,b);startMidX=m.x;startMidY=m.y;
-   startScale=scale;startTx=tx;startTy=ty;
-  }
- },{passive:false});
-
- flight.addEventListener('pointermove',e=>{
-  if(!pointers.has(e.pointerId))return;
-  e.preventDefault();e.stopPropagation();
-  pointers.set(e.pointerId,e);
-  if(pointers.size===2){
-   const [a,b]=[...pointers.values()];
-   const d=distance(a,b);
-   const m=midpoint(a,b);
-   scale=Math.max(1,Math.min(MAX_SCALE,startScale*(d/startDistance)));
-   tx=startTx+(m.x-startMidX);
-   ty=startTy+(m.y-startMidY);
-   moved=true;apply();
-  }else if(pointers.size===1&&scale>1){
-   const p=[...pointers.values()][0];
-   const dx=p.clientX-singleStartX,dy=p.clientY-singleStartY;
-   if(Math.hypot(dx,dy)>MOVE_TOLERANCE)moved=true;
-   tx=startTx+dx;ty=startTy+dy;apply();
-  }
- },{passive:false});
-
- const finishPointer=e=>{
-  if(!pointers.has(e.pointerId))return;
-  e.preventDefault();e.stopPropagation();
-  pointers.delete(e.pointerId);
-  cloneImg.style.transition='transform .16s ease-out';
-  clamp();apply();
-  if(pointers.size===1){
-   const p=[...pointers.values()][0];
-   singleStartX=p.clientX;singleStartY=p.clientY;startTx=tx;startTy=ty;
-  }
-  if(pointers.size===0){
-   const elapsed=performance.now()-singleStartTime;
-   if(scale===1&&!moved&&elapsed<650)closeHandler(e);
-  }
- };
- flight.addEventListener('pointerup',finishPointer,{passive:false});
- flight.addEventListener('pointercancel',finishPointer,{passive:false});
- flight.addEventListener('lostpointercapture',e=>{pointers.delete(e.pointerId)});
-
- return {reset,get scale(){return scale}};
+function clampPhotoPan(state){
+ const rect=state.flight.getBoundingClientRect();
+ const maxX=Math.max(0,(rect.width*(state.zoomScale-1))/2);
+ const maxY=Math.max(0,(rect.height*(state.zoomScale-1))/2);
+ state.panX=Math.max(-maxX,Math.min(maxX,state.panX));
+ state.panY=Math.max(-maxY,Math.min(maxY,state.panY));
 }
+
+function applyPhotoZoom(state,animate=false){
+ if(!state?.cloneImg)return;
+ clampPhotoPan(state);
+ state.cloneImg.style.transition=animate?'transform .18s ease-out':'none';
+ state.cloneImg.style.transform=`translate3d(${state.panX}px,${state.panY}px,0) scale(${state.zoomScale})`;
+ if(animate)setTimeout(()=>{if(state.cloneImg)state.cloneImg.style.transition='none'},190);
+}
+
+function installPhotoGestures(state){
+ const el=state.flight;
+ state.zoomScale=1;
+ state.panX=0;
+ state.panY=0;
+ state.gestureMode='';
+ state.gestureMoved=false;
+ state.suppressClick=false;
+ let startDistance=0,startScale=1,startX=0,startY=0,startPanX=0,startPanY=0;
+ const distance=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+
+ const markGesture=()=>{
+  state.gestureMoved=true;
+  state.suppressClick=true;
+  clearTimeout(state.clickResetTimer);
+  state.clickResetTimer=setTimeout(()=>{state.suppressClick=false},260);
+ };
+
+ el.addEventListener('touchstart',e=>{
+  if(e.touches.length>=2){
+   e.preventDefault();e.stopPropagation();
+   state.gestureMode='pinch';
+   startDistance=Math.max(1,distance(e.touches));
+   startScale=state.zoomScale;
+   markGesture();
+  }else if(e.touches.length===1 && state.zoomScale>1.001){
+   e.preventDefault();e.stopPropagation();
+   state.gestureMode='pan';
+   startX=e.touches[0].clientX;startY=e.touches[0].clientY;
+   startPanX=state.panX;startPanY=state.panY;
+  }
+ },{passive:false});
+
+ el.addEventListener('touchmove',e=>{
+  if(state.gestureMode==='pinch' && e.touches.length>=2){
+   e.preventDefault();e.stopPropagation();
+   const next=startScale*(distance(e.touches)/startDistance);
+   state.zoomScale=Math.max(1,Math.min(2.5,next));
+   if(state.zoomScale<=1.01){state.zoomScale=1;state.panX=0;state.panY=0}
+   markGesture();
+   applyPhotoZoom(state);
+  }else if(state.gestureMode==='pan' && e.touches.length===1 && state.zoomScale>1){
+   e.preventDefault();e.stopPropagation();
+   state.panX=startPanX+(e.touches[0].clientX-startX);
+   state.panY=startPanY+(e.touches[0].clientY-startY);
+   markGesture();
+   applyPhotoZoom(state);
+  }
+ },{passive:false});
+
+ const finishGesture=e=>{
+  if(state.gestureMode){
+   e.preventDefault();e.stopPropagation();
+   if(state.zoomScale<1.03){state.zoomScale=1;state.panX=0;state.panY=0}
+   applyPhotoZoom(state,true);
+   state.gestureMode='';
+  }
+ };
+ el.addEventListener('touchend',finishGesture,{passive:false});
+ el.addEventListener('touchcancel',finishGesture,{passive:false});
+}
+
+// On the resting book, a pinch has no meaning. Intercept it before the
+// browser or page-turn handlers can interpret it. Zoom is permitted only
+// while the independent full-photo viewer exists.
+function suppressBookPinch(e){
+ if(isViewing || e.touches?.length<2)return;
+ if(!e.target.closest?.('.reader-screen'))return;
+ e.preventDefault();
+ e.stopImmediatePropagation();
+}
+document.addEventListener('touchstart',suppressBookPinch,{capture:true,passive:false});
+document.addEventListener('touchmove',suppressBookPinch,{capture:true,passive:false});
+document.addEventListener('gesturestart',e=>{
+ if(!isViewing && e.target.closest?.('.reader-screen')){e.preventDefault();e.stopImmediatePropagation()}
+},{capture:true,passive:false});
+document.addEventListener('gesturechange',e=>{
+ if(!isViewing && e.target.closest?.('.reader-screen')){e.preventDefault();e.stopImmediatePropagation()}
+},{capture:true,passive:false});
 
 function openPhoto(itemIndex,mounted){
  if(isViewing)return;
@@ -558,7 +555,6 @@ function openPhoto(itemIndex,mounted){
   document.body.appendChild(overlay);
 
   const dismiss=e=>{e.preventDefault();e.stopPropagation();closePhoto(true)};
-  const gestures=installBoundedPhotoGestures(flight,cloneImg,dismiss);
   backdrop.addEventListener('click',dismiss);
   document.addEventListener('keydown',photoKey);
 
@@ -585,7 +581,13 @@ function openPhoto(itemIndex,mounted){
     caption.style.bottom='auto';
     caption.classList.add('shown');
    };
-   mounted._photoState={overlay,flight,cloneImg,backdrop,caption,dismiss,gestures,move,colour,target};
+   const photoState={overlay,flight,cloneImg,backdrop,caption,dismiss,move,colour,target};
+   mounted._photoState=photoState;
+   installPhotoGestures(photoState);
+   flight.addEventListener('click',e=>{
+    if(photoState.suppressClick){e.preventDefault();e.stopPropagation();return}
+    dismiss(e);
+   });
   };
 
   if(cloneImg.complete&&cloneImg.naturalWidth)placeTarget();
@@ -610,6 +612,9 @@ function closePhoto(animate=true){
  if(!animate||!st){finish();return}
  st.caption?.classList.remove('shown');
  st.move?.cancel();st.colour?.cancel();
+ clearTimeout(st.clickResetTimer);
+ st.zoomScale=1;st.panX=0;st.panY=0;
+ if(st.cloneImg){st.cloneImg.style.transition='transform .16s ease-out';st.cloneImg.style.transform='translate3d(0,0,0) scale(1)'}
  const sourceImg=mounted.querySelector('img');
  const r=(sourceImg||mounted).getBoundingClientRect();
  const cs=getComputedStyle(st.flight);
