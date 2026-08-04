@@ -14,7 +14,7 @@ window.SCRAPBOOK_DATA = {
         {
           "src": "images/full/01-002-happy-that-day.jpg",
           "thumb": "images/thumbs/01-002-happy-that-day.jpg",
-          "caption": "Primary school Tristan and Paul"
+          "caption": "Primary school Tristan and Paula"
         },
         {
           "src": "images/full/01-003-he-s-so-cute.jpg",
